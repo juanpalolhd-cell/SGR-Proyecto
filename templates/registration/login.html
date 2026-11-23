@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block title %}Iniciar sesión{% endblock %}
+{% block content %}
+<section class="auth-card">
+    <h2>Iniciar sesión</h2>
+    <p class="ayuda">Ingrese su usuario y contraseña para acceder al SGR.</p>
+    {% if messages %}
+    <ul class="mensajes">
+        {% for message in messages %}
+        <li class="{{ message.tags }}">{{ message }}</li>
+        {% endfor %}
+    </ul>
+    {% endif %}
+    <form method="post" action="{% url 'login' %}{% if request.GET.next %}?next={{ request.GET.next|urlencode }}{% endif %}">
+        {% csrf_token %}
+        {% if request.GET.next %}
+        <input type="hidden" name="next" value="{{ request.GET.next }}">
+        {% endif %}
+        <div class="form-grupo">
+            <label for="id_username">Usuario</label>
+            <input type="text" name="username" id="id_username" value="{{ username|default:'' }}" required autofocus autocomplete="username">
+        </div>
+        <div class="form-grupo">
+            <label for="id_password">Contraseña</label>
+            <input type="password" name="password" id="id_password" required autocomplete="current-password">
+        </div>
+        <button type="submit" class="btn-primario">Ingresar</button>
+    </form>
+</section>
+{% endblock %}

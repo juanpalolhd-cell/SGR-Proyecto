@@ -1,0 +1,173 @@
+{
+  "actividades": [
+    {
+      "id": 1,
+      "codigo": "ACT-2026-0001",
+      "fecha": "2026-08-01",
+      "descripcion": "Atención de solicitud de poda de árbol en calle Principal",
+      "accion": "Coordinación con área de áreas verdes",
+      "contacto": "Vecino Sr. Morales",
+      "telefono": "+56 9 1111 0001",
+      "persona_id": 5,
+      "unidad_id": 1,
+      "item": "Gestión territorial",
+      "estado": "Validada",
+      "agenda": true
+    },
+    {
+      "id": 2,
+      "codigo": "ACT-2026-0002",
+      "fecha": "2026-08-03",
+      "descripcion": "Fiscalización de horario de comercio",
+      "accion": "Visita en terreno y acta",
+      "contacto": "Comerciante local",
+      "telefono": "+56 9 1111 0002",
+      "persona_id": 5,
+      "unidad_id": 1,
+      "item": "Fiscalización",
+      "estado": "Validada",
+      "agenda": false
+    },
+    {
+      "id": 3,
+      "codigo": "ACT-2026-0003",
+      "fecha": "2026-08-05",
+      "descripcion": "Reposición de luminaria en pasaje Los Aromos",
+      "accion": "Reporte al área de alumbrado",
+      "contacto": "Sra. Gómez",
+      "telefono": "+56 9 1111 0003",
+      "persona_id": 6,
+      "unidad_id": 2,
+      "item": "Infraestructura",
+      "estado": "Pendiente",
+      "agenda": true
+    },
+    {
+      "id": 4,
+      "codigo": "ACT-2026-0004",
+      "fecha": "2026-08-06",
+      "descripcion": "Limpieza de canal en sector oriente",
+      "accion": "Supervisión de faena",
+      "contacto": "Junta de vecinos",
+      "telefono": "+56 9 1111 0004",
+      "persona_id": 9,
+      "unidad_id": 3,
+      "item": "Aseo y ornato",
+      "estado": "Validada",
+      "agenda": false
+    },
+    {
+      "id": 5,
+      "codigo": "ACT-2026-0005",
+      "fecha": "2026-08-08",
+      "descripcion": "Atención social a adulto mayor en situación de vulnerabilidad",
+      "accion": "Derivación a red de apoyo social",
+      "contacto": "Usuario SGR-SOC-001",
+      "telefono": "+56 9 1111 0005",
+      "persona_id": 8,
+      "unidad_id": 1,
+      "item": "Atención social",
+      "estado": "Validada",
+      "agenda": true
+    },
+    {
+      "id": 6,
+      "codigo": "ACT-2026-0006",
+      "fecha": "2026-08-10",
+      "descripcion": "Reparación de vereda en acceso a consultorio",
+      "accion": "Levantamiento y solicitud de obra",
+      "contacto": "Concesionaria",
+      "telefono": "+56 9 1111 0006",
+      "persona_id": 10,
+      "unidad_id": 4,
+      "item": "Infraestructura",
+      "estado": "En revisión",
+      "agenda": false
+    },
+    {
+      "id": 7,
+      "codigo": "ACT-2026-0007",
+      "fecha": "2026-08-12",
+      "descripcion": "Campaña de reciclaje comunitaria",
+      "accion": "Organización y difusión",
+      "contacto": "Comité ambiental",
+      "telefono": "+56 9 1111 0007",
+      "persona_id": 6,
+      "unidad_id": 2,
+      "item": "Participación vecinal",
+      "estado": "Pendiente",
+      "agenda": true
+    },
+    {
+      "id": 8,
+      "codigo": "ACT-2026-0008",
+      "fecha": "2026-08-15",
+      "descripcion": "Control de microbasurales en zona norte",
+      "accion": "Cuadrilla de aseo y multa",
+      "contacto": "Vigilante sectorial",
+      "telefono": "+56 9 1111 0008",
+      "persona_id": 9,
+      "unidad_id": 3,
+      "item": "Aseo y ornato",
+      "estado": "Validada",
+      "agenda": false
+    }
+  ],
+  "evidencias": [
+    {
+      "id": 1,
+      "codigo": "EVID-2026-0001",
+      "actividad_id": 1,
+      "ruta": "/evidencias/act-2026-0001/poda.jpeg",
+      "autor": "Rodrigo Vega",
+      "fecha": "2026-08-01",
+      "estado": "Aprobada",
+      "verificador": "José Opazo",
+      "observacion": "Evidencia consistente con la solicitud"
+    },
+    {
+      "id": 2,
+      "codigo": "EVID-2026-0002",
+      "actividad_id": 2,
+      "ruta": "/evidencias/act-2026-0002/fiscalizacion.jpeg",
+      "autor": "Rodrigo Vega",
+      "fecha": "2026-08-03",
+      "estado": "Aprobada",
+      "verificador": "José Opazo",
+      "observacion": "Acta correcta"
+    },
+    {
+      "id": 3,
+      "codigo": "EVID-2026-0003",
+      "actividad_id": 3,
+      "ruta": "/evidencias/act-2026-0003/luminaria.jpeg",
+      "autor": "Camila Torres",
+      "fecha": "2026-08-05",
+      "estado": "Pendiente",
+      "verificador": "",
+      "observacion": "En espera de validación"
+    },
+    {
+      "id": 4,
+      "codigo": "EVID-2026-0004",
+      "actividad_id": 4,
+      "ruta": "/evidencias/act-2026-0004/canal.jpeg",
+      "autor": "Matías Herrera",
+      "fecha": "2026-08-06",
+      "estado": "Rechazada",
+      "verificador": "José Opazo",
+      "observacion": "Fotografía fuera de foco, se solicita corrección"
+    },
+    {
+      "id": 5,
+      "codigo": "EVID-2026-0005",
+      "actividad_id": 5,
+      "ruta": "/evidencias/act-2026-0005/social.jpeg",
+      "autor": "Valentina Castro",
+      "fecha": "2026-08-08",
+      "estado": "Aprobada",
+      "verificador": "José Opazo",
+      "observacion": "Derivación registrada correctamente"
+    }
+  ]
+}

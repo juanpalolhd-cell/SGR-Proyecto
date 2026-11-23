@@ -1,0 +1,156 @@
+{
+  "periodos": [
+    {
+      "id": 1,
+      "nombre": "Período Agosto 2026",
+      "inicio": "2026-08-01",
+      "termino": "2026-08-31",
+      "dias_computables": 22,
+      "estado": "Abierto"
+    },
+    {
+      "id": 2,
+      "nombre": "Período Septiembre 2026",
+      "inicio": "2026-09-01",
+      "termino": "2026-09-30",
+      "dias_computables": 21,
+      "estado": "Abierto"
+    },
+    {
+      "id": 3,
+      "nombre": "Período Julio 2026",
+      "inicio": "2026-07-01",
+      "termino": "2026-07-31",
+      "dias_computables": 23,
+      "estado": "Cerrado"
+    }
+  ],
+  "metas": [
+    {
+      "id": 1,
+      "periodo_id": 1,
+      "persona_id": 5,
+      "item": "Gestión territorial",
+      "unidad": "actividades",
+      "meta": 10,
+      "avance": 8,
+      "ponderador": 40
+    },
+    {
+      "id": 2,
+      "periodo_id": 1,
+      "persona_id": 5,
+      "item": "Fiscalización",
+      "unidad": "actividades",
+      "meta": 5,
+      "avance": 4,
+      "ponderador": 30
+    },
+    {
+      "id": 3,
+      "periodo_id": 1,
+      "persona_id": 5,
+      "item": "Participación vecinal",
+      "unidad": "actividades",
+      "meta": 4,
+      "avance": 1,
+      "ponderador": 30
+    },
+    {
+      "id": 4,
+      "periodo_id": 1,
+      "persona_id": 6,
+      "item": "Infraestructura",
+      "unidad": "actividades",
+      "meta": 8,
+      "avance": 6,
+      "ponderador": 50
+    },
+    {
+      "id": 5,
+      "periodo_id": 1,
+      "persona_id": 6,
+      "item": "Participación vecinal",
+      "unidad": "actividades",
+      "meta": 6,
+      "avance": 3,
+      "ponderador": 50
+    },
+    {
+      "id": 6,
+      "periodo_id": 1,
+      "persona_id": 9,
+      "item": "Aseo y ornato",
+      "unidad": "actividades",
+      "meta": 12,
+      "avance": 9,
+      "ponderador": 60
+    },
+    {
+      "id": 7,
+      "periodo_id": 1,
+      "persona_id": 9,
+      "item": "Infraestructura",
+      "unidad": "actividades",
+      "meta": 5,
+      "avance": 2,
+      "ponderador": 40
+    },
+    {
+      "id": 8,
+      "periodo_id": 1,
+      "persona_id": 8,
+      "item": "Atención social",
+      "unidad": "atenciones",
+      "meta": 6,
+      "avance": 6,
+      "ponderador": 100
+    },
+    {
+      "id": 9,
+      "periodo_id": 2,
+      "persona_id": 5,
+      "item": "Gestión territorial",
+      "unidad": "actividades",
+      "meta": 10,
+      "avance": 3,
+      "ponderador": 50
+    },
+    {
+      "id": 10,
+      "periodo_id": 2,
+      "persona_id": 6,
+      "item": "Infraestructura",
+      "unidad": "actividades",
+      "meta": 8,
+      "avance": 1,
+      "ponderador": 100
+    },
+    {
+      "id": 11,
+      "periodo_id": 3,
+      "persona_id": 5,
+      "item": "Gestión territorial",
+      "unidad": "actividades",
+      "meta": 10,
+      "avance": 9,
+      "ponderador": 50
+    },
+    {
+      "id": 12,
+      "periodo_id": 3,
+      "persona_id": 5,
+      "item": "Fiscalización",
+      "unidad": "actividades",
+      "meta": 5,
+      "avance": 4,
+      "ponderador": 50
+    }
+  ],
+  "parametros": {
+    "tope_ponderado": 150,
+    "umbral_colectivo": 80,
+    "maximo_cumplimiento": 100,
+    "regla_semaforo_ambar": 60
+  }
+}

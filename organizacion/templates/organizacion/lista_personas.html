@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% block title %}Funcionarios{% endblock %}
+{% block content %}
+<div class="cabecera-lista">
+    <h2>Funcionarios</h2>
+    <div class="acciones-lista">
+        {% if perms.organizacion.add_persona %}
+        <a class="boton" href="{% url 'crear_persona' %}">Nuevo funcionario</a>
+        {% endif %}
+        {% if perms.organizacion.add_cargo %}
+        <a class="boton boton-secundario" href="{% url 'crear_cargo' %}">Nuevo cargo</a>
+        {% endif %}
+    </div>
+</div>
+<a class="enlace-volver" href="{% url 'lista_unidades' %}">&larr; Volver a delegaciones</a>
+<form class="filtro-lista" method="get">
+    <input type="search" name="q" value="{{ q }}" placeholder="Filtrar funcionarios…">
+    <button type="submit" class="btn-primario">Filtrar</button>
+    {% if q %}<a class="boton boton-secundario" href="{% url 'lista_personas' %}">Limpiar</a>{% endif %}
+</form>
+<table class="tabla">
+    <thead>
+        <tr>
+            <th>Funcionario</th>
+            <th>Cargo</th>
+            <th>Delegación</th>
+            <th>Roles</th>
+            <th>Estado</th>
+            <th>Acciones</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for persona in personas %}
+        <tr>
+            <td>{{ persona.nombre }}</td>
+            <td>{{ persona.cargo.nombre }}</td>
+            <td>{{ persona.delegacion.nombre }}</td>
+            <td>{{ persona.roles|join:", " }}</td>
+            <td>
+                {% if persona.estado == "Activo" %}
+                <span class="estado verde">{{ persona.estado }}</span>
+                {% else %}
+                <span class="estado gris">{{ persona.estado }}</span>
+                {% endif %}
+            </td>
+            <td class="celdas-acciones">
+                <a class="boton" href="{% url 'detalle_persona' persona.id %}">Ver</a>
+                {% if perms.organizacion.change_persona %}
+                <a class="boton boton-secundario" href="{% url 'editar_persona' persona.id %}">Editar</a>
+                {% endif %}
+                {% if perms.organizacion.delete_persona %}
+                <a class="boton boton-peligro" href="{% url 'borrar_persona' persona.id %}">Borrar</a>
+                {% endif %}
+            </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="6">No hay funcionarios registrados.</td></tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

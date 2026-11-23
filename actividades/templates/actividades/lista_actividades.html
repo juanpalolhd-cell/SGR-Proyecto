@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+{% block title %}Actividades{% endblock %}
+{% block content %}
+<div class="cabecera-lista">
+    <h2>Actividades y Servicios</h2>
+    <div class="acciones-lista">
+        {% if perms.actividades.add_actividad %}
+        <a class="boton" href="{% url 'crear_actividad' %}">Nueva actividad</a>
+        {% endif %}
+    </div>
+</div>
+<a class="enlace-volver" href="{% url 'home' %}">&larr; Volver al inicio</a>
+<form class="filtro-lista" method="get">
+    <input type="search" name="q" value="{{ q }}" placeholder="Filtrar actividades…">
+    <button type="submit" class="btn-primario">Filtrar</button>
+    {% if q %}<a class="boton boton-secundario" href="{% url 'lista_actividades' %}">Limpiar</a>{% endif %}
+</form>
+<table class="tabla">
+    <thead>
+        <tr>
+            <th>Código</th>
+            <th>Fecha</th>
+            <th>Descripción</th>
+            <th>Funcionario</th>
+            <th>Delegación</th>
+            <th>Ítem</th>
+            <th>Estado</th>
+            <th>Acciones</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for actividad in actividades %}
+        <tr>
+            <td>{{ actividad.codigo }}</td>
+            <td>{{ actividad.fecha }}</td>
+            <td>{{ actividad.descripcion }}</td>
+            <td>{{ actividad.persona.nombre }}</td>
+            <td>{{ actividad.unidad.nombre }}</td>
+            <td>{{ actividad.item }}</td>
+            <td>
+                {% if actividad.estado == "Validada" %}
+                <span class="estado verde">{{ actividad.estado }}</span>
+                {% elif actividad.estado == "Pendiente" %}
+                <span class="estado ambar">{{ actividad.estado }}</span>
+                {% else %}
+                <span class="estado gris">{{ actividad.estado }}</span>
+                {% endif %}
+            </td>
+            <td class="celdas-acciones">
+                <a class="boton" href="{% url 'detalle_actividad' actividad.id %}">Ver</a>
+                {% if perms.actividades.change_actividad %}
+                <a class="boton boton-secundario" href="{% url 'editar_actividad' actividad.id %}">Editar</a>
+                {% endif %}
+                {% if perms.actividades.delete_actividad %}
+                <a class="boton boton-peligro" href="{% url 'borrar_actividad' actividad.id %}">Borrar</a>
+                {% endif %}
+            </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="8">No hay actividades registradas.</td></tr>
+        {% endfor %}
+    </tbody>
+</table>
+<p><a class="boton" href="{% url 'lista_evidencias' %}">Ver evidencias</a></p>
+{% endblock %}

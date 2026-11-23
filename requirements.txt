@@ -1,0 +1,5 @@
+# Django verified in the isolated local test environment. See README for scope.
+Django==5.2.18
+# Deployment requirements; actual MySQL/client/Gunicorn versions remain unverified.
+mysqlclient>=2.2,<3.0
+gunicorn>=23.0,<24.0

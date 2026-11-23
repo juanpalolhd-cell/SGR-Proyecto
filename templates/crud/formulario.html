@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block title %}{{ titulo }}{% endblock %}
+{% block content %}
+<a class="enlace-volver" href="{{ volver_url }}">&larr; Volver</a>
+<div class="detalle-caja form-caja">
+    <h2>{{ titulo }}</h2>
+    <form method="post" novalidate>
+        {% csrf_token %}
+        {% if form.non_field_errors %}
+        <ul class="mensajes">
+            {% for error in form.non_field_errors %}
+            <li class="error">{{ error }}</li>
+            {% endfor %}
+        </ul>
+        {% endif %}
+        {% for field in form %}
+        <div class="form-grupo">
+            <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+            {{ field }}
+            {% if field.help_text %}<p class="ayuda">{{ field.help_text }}</p>{% endif %}
+            {% for error in field.errors %}
+            <p class="error-campo">{{ error }}</p>
+            {% endfor %}
+        </div>
+        {% endfor %}
+        <div class="acciones-form">
+            <button type="submit" class="btn-primario">Guardar</button>
+            <a class="boton boton-secundario" href="{{ volver_url }}">Cancelar</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

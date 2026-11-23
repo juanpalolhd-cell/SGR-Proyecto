@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block title %}{{ compromiso.origen }}{% endblock %}
+{% block content %}
+<a class="enlace-volver" href="{% url 'lista_compromisos' %}">&larr; Volver a la agenda</a>
+<div class="detalle-caja">
+    <div class="cabecera-lista">
+        <h2>Compromiso {{ compromiso.id }}</h2>
+        <div class="acciones-lista">
+            {% if perms.agenda.change_compromiso %}
+            <a class="boton boton-secundario" href="{% url 'editar_compromiso' compromiso.id %}">Editar</a>
+            {% endif %}
+            {% if perms.agenda.delete_compromiso %}
+            <a class="boton boton-peligro" href="{% url 'borrar_compromiso' compromiso.id %}">Borrar</a>
+            {% endif %}
+        </div>
+    </div>
+    <dl>
+        <dt>Origen</dt>
+        <dd>{{ compromiso.origen }}</dd>
+        <dt>Solicitante</dt>
+        <dd>{{ compromiso.solicitante }}</dd>
+        <dt>Territorio</dt>
+        <dd>{{ compromiso.territorio }}</dd>
+        <dt>Responsable</dt>
+        <dd>{{ compromiso.responsable.nombre }}</dd>
+        <dt>Delegación</dt>
+        <dd>{{ compromiso.unidad.nombre }}</dd>
+        <dt>Área de apoyo</dt>
+        <dd>{{ compromiso.area_apoyo }}</dd>
+        <dt>Fecha comprometida</dt>
+        <dd>{{ compromiso.fecha_comprometida }}</dd>
+        <dt>Estado</dt>
+        <dd>
+            {% if compromiso.estado == "Realizado" %}
+            <span class="estado verde">{{ compromiso.estado }}</span>
+            {% elif compromiso.estado == "En proceso" %}
+            <span class="estado ambar">{{ compromiso.estado }}</span>
+            {% else %}
+            <span class="estado gris">{{ compromiso.estado }}</span>
+            {% endif %}
+        </dd>
+        <dt>Observaciones</dt>
+        <dd>{{ compromiso.observaciones }}</dd>
+    </dl>
+</div>
+{% endblock %}

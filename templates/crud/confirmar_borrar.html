@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block title %}{{ titulo }}{% endblock %}
+{% block content %}
+<a class="enlace-volver" href="{{ volver_url }}">&larr; Volver</a>
+<div class="detalle-caja form-caja">
+    <h2>{{ titulo }}</h2>
+    <p>¿Seguro que deseas eliminar <strong>{{ objeto_etiqueta }}</strong>? Esta acción no se puede deshacer.</p>
+    <form method="post">
+        {% csrf_token %}
+        <div class="acciones-form">
+            <button type="submit" class="btn-peligro">Sí, eliminar</button>
+            <a class="boton boton-secundario" href="{{ volver_url }}">Cancelar</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

@@ -1,0 +1,76 @@
+{
+  "compromisos": [
+    {
+      "id": 1,
+      "origen": "Solicitud externa",
+      "solicitante": "Junta de vecinos Las Compañías",
+      "territorio": "Las Compañías",
+      "responsable_id": 6,
+      "unidad_id": 2,
+      "area_apoyo": "Alumbrado",
+      "fecha_comprometida": "2026-09-20",
+      "estado": "En proceso",
+      "observaciones": "Se coordinó reposición de luminarias"
+    },
+    {
+      "id": 2,
+      "origen": "Solicitud interna",
+      "solicitante": "Delegación Centro",
+      "territorio": "Centro",
+      "responsable_id": 5,
+      "unidad_id": 1,
+      "area_apoyo": "Áreas verdes",
+      "fecha_comprometida": "2026-08-25",
+      "estado": "Pendiente",
+      "observaciones": "Poda pendiente de confirmación de cuadrilla"
+    },
+    {
+      "id": 3,
+      "origen": "Solicitud externa",
+      "solicitante": "Sra. Gómez",
+      "territorio": "Las Compañías",
+      "responsable_id": 6,
+      "unidad_id": 2,
+      "area_apoyo": "Alumbrado",
+      "fecha_comprometida": "2026-08-28",
+      "estado": "Ingresado",
+      "observaciones": "Nuevo compromiso registrado"
+    },
+    {
+      "id": 4,
+      "origen": "Reunión de coordinación",
+      "solicitante": "Jefatura",
+      "territorio": "Cerro Grande",
+      "responsable_id": 9,
+      "unidad_id": 3,
+      "area_apoyo": "Aseo y ornato",
+      "fecha_comprometida": "2026-09-05",
+      "estado": "Realizado",
+      "observaciones": "Limpieza de canal ejecutada y validada"
+    },
+    {
+      "id": 5,
+      "origen": "Solicitud externa",
+      "solicitante": "Comité ambiental",
+      "territorio": "Las Compañías",
+      "responsable_id": 6,
+      "unidad_id": 2,
+      "area_apoyo": "Comunicaciones",
+      "fecha_comprometida": "2026-08-30",
+      "estado": "En proceso",
+      "observaciones": "En preparación de difusión"
+    },
+    {
+      "id": 6,
+      "origen": "Solicitud externa",
+      "solicitante": "Concesionaria",
+      "territorio": "La Antena",
+      "responsable_id": 10,
+      "unidad_id": 4,
+      "area_apoyo": "Infraestructura",
+      "fecha_comprometida": "2026-07-30",
+      "estado": "Pendiente",
+      "observaciones": "Vencido, requiere gestión urgente"
+    }
+  ]
+}

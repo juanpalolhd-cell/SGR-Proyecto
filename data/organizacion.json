@@ -1,0 +1,159 @@
+{
+  "unidades": [
+    {
+      "id": 1,
+      "nombre": "Delegación Centro",
+      "ambito": "Centro histórico y barrio comercial",
+      "responsable": "María Inés Rojas",
+      "estado": "Activa"
+    },
+    {
+      "id": 2,
+      "nombre": "Delegación Las Compañías",
+      "ambito": "Sector norte, barrios residenciales",
+      "responsable": "Pedro Salinas",
+      "estado": "Activa"
+    },
+    {
+      "id": 3,
+      "nombre": "Delegación Cerro Grande",
+      "ambito": "Sector oriente, cerros",
+      "responsable": "Carla Fuentes",
+      "estado": "Activa"
+    },
+    {
+      "id": 4,
+      "nombre": "Delegación La Antena",
+      "ambito": "Sector sur y periferia",
+      "responsable": "Luis Martínez",
+      "estado": "Activa"
+    },
+    {
+      "id": 5,
+      "nombre": "Delegación San Juan",
+      "ambito": "Sector norponiente",
+      "responsable": "Ana Pereira",
+      "estado": "Inactiva"
+    }
+  ],
+  "cargos": [
+    {
+      "id": 1,
+      "nombre": "Jefe de Delegación",
+      "funciones": [
+        "Coordinar el equipo territorial",
+        "Supervisar compromisos",
+        "Revisar indicadores de gestión"
+      ]
+    },
+    {
+      "id": 2,
+      "nombre": "Funcionario Territorial",
+      "funciones": [
+        "Registrar actividades y solicitudes",
+        "Atender requerimientos de vecinos",
+        "Adjuntar evidencias"
+      ]
+    },
+    {
+      "id": 3,
+      "nombre": "Verificador",
+      "funciones": [
+        "Validar evidencias",
+        "Registrar observaciones",
+        "Controlar estados"
+      ]
+    },
+    {
+      "id": 4,
+      "nombre": "Área Social",
+      "funciones": [
+        "Registrar atenciones sociales",
+        "Gestionar casos de usuarios",
+        "Levantar alertas sociales"
+      ]
+    }
+  ],
+  "personas": [
+    {
+      "id": 1,
+      "nombre": "María Inés Rojas",
+      "cargo_id": 1,
+      "delegacion_id": 1,
+      "roles": ["Administrador", "Jefatura"],
+      "estado": "Activo"
+    },
+    {
+      "id": 2,
+      "nombre": "Pedro Salinas",
+      "cargo_id": 1,
+      "delegacion_id": 2,
+      "roles": ["Jefatura"],
+      "estado": "Activo"
+    },
+    {
+      "id": 3,
+      "nombre": "Carla Fuentes",
+      "cargo_id": 1,
+      "delegacion_id": 3,
+      "roles": ["Jefatura"],
+      "estado": "Activo"
+    },
+    {
+      "id": 4,
+      "nombre": "Luis Martínez",
+      "cargo_id": 1,
+      "delegacion_id": 4,
+      "roles": ["Jefatura"],
+      "estado": "Activo"
+    },
+    {
+      "id": 5,
+      "nombre": "Rodrigo Vega",
+      "cargo_id": 2,
+      "delegacion_id": 1,
+      "roles": ["Funcionario"],
+      "estado": "Activo"
+    },
+    {
+      "id": 6,
+      "nombre": "Camila Torres",
+      "cargo_id": 2,
+      "delegacion_id": 2,
+      "roles": ["Funcionario"],
+      "estado": "Activo"
+    },
+    {
+      "id": 7,
+      "nombre": "José Opazo",
+      "cargo_id": 3,
+      "delegacion_id": 1,
+      "roles": ["Verificador"],
+      "estado": "Activo"
+    },
+    {
+      "id": 8,
+      "nombre": "Valentina Castro",
+      "cargo_id": 4,
+      "delegacion_id": 1,
+      "roles": ["Área Social"],
+      "estado": "Activo"
+    },
+    {
+      "id": 9,
+      "nombre": "Matías Herrera",
+      "cargo_id": 2,
+      "delegacion_id": 3,
+      "roles": ["Funcionario"],
+      "estado": "Activo"
+    },
+    {
+      "id": 10,
+      "nombre": "Ignacio Delgado",
+      "cargo_id": 2,
+      "delegacion_id": 4,
+      "roles": ["Funcionario"],
+      "estado": "Activo"
+    }
+  ]
+}

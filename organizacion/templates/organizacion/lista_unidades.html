@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% block title %}Delegaciones{% endblock %}
+{% block content %}
+<div class="cabecera-lista">
+    <h2>Delegaciones Municipales</h2>
+    <div class="acciones-lista">
+        {% if perms.organizacion.add_unidad %}
+        <a class="boton" href="{% url 'crear_unidad' %}">Nueva delegación</a>
+        {% endif %}
+    </div>
+</div>
+<a class="enlace-volver" href="{% url 'home' %}">&larr; Volver al inicio</a>
+<form class="filtro-lista" method="get">
+    <input type="search" name="q" value="{{ q }}" placeholder="Filtrar delegaciones…">
+    <button type="submit" class="btn-primario">Filtrar</button>
+    {% if q %}<a class="boton boton-secundario" href="{% url 'lista_unidades' %}">Limpiar</a>{% endif %}
+</form>
+<table class="tabla">
+    <thead>
+        <tr>
+            <th>Delegación</th>
+            <th>Ámbito</th>
+            <th>Responsable</th>
+            <th>Estado</th>
+            <th>Acciones</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for unidad in unidades %}
+        <tr>
+            <td>{{ unidad.nombre }}</td>
+            <td>{{ unidad.ambito }}</td>
+            <td>{{ unidad.responsable }}</td>
+            <td>
+                {% if unidad.estado == "Activa" %}
+                <span class="estado verde">{{ unidad.estado }}</span>
+                {% else %}
+                <span class="estado gris">{{ unidad.estado }}</span>
+                {% endif %}
+            </td>
+            <td class="celdas-acciones">
+                <a class="boton" href="{% url 'detalle_unidad' unidad.id %}">Ver</a>
+                {% if perms.organizacion.change_unidad %}
+                <a class="boton boton-secundario" href="{% url 'editar_unidad' unidad.id %}">Editar</a>
+                {% endif %}
+                {% if perms.organizacion.delete_unidad %}
+                <a class="boton boton-peligro" href="{% url 'borrar_unidad' unidad.id %}">Borrar</a>
+                {% endif %}
+            </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="5">No hay delegaciones registradas.</td></tr>
+        {% endfor %}
+    </tbody>
+</table>
+<p><a class="boton" href="{% url 'lista_personas' %}">Ver funcionarios</a></p>
+{% endblock %}

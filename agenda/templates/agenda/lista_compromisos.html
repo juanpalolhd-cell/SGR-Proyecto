@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% block title %}Agenda de Compromisos{% endblock %}
+{% block content %}
+<div class="cabecera-lista">
+    <h2>Agenda Colectiva de Compromisos</h2>
+    <div class="acciones-lista">
+        {% if perms.agenda.add_compromiso %}
+        <a class="boton" href="{% url 'crear_compromiso' %}">Nuevo compromiso</a>
+        {% endif %}
+    </div>
+</div>
+<a class="enlace-volver" href="{% url 'home' %}">&larr; Volver al inicio</a>
+<form class="filtro-lista" method="get">
+    <input type="search" name="q" value="{{ q }}" placeholder="Filtrar compromisos…">
+    <button type="submit" class="btn-primario">Filtrar</button>
+    {% if q %}<a class="boton boton-secundario" href="{% url 'lista_compromisos' %}">Limpiar</a>{% endif %}
+</form>
+<table class="tabla">
+    <thead>
+        <tr>
+            <th>Origen</th>
+            <th>Solicitante</th>
+            <th>Territorio</th>
+            <th>Responsable</th>
+            <th>Fecha comprometida</th>
+            <th>Estado</th>
+            <th>Acciones</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for compromiso in compromisos %}
+        <tr>
+            <td>{{ compromiso.origen }}</td>
+            <td>{{ compromiso.solicitante }}</td>
+            <td>{{ compromiso.territorio }}</td>
+            <td>{{ compromiso.responsable.nombre }}</td>
+            <td>{{ compromiso.fecha_comprometida }}</td>
+            <td>
+                {% if compromiso.estado == "Realizado" %}
+                <span class="estado verde">{{ compromiso.estado }}</span>
+                {% elif compromiso.estado == "En proceso" %}
+                <span class="estado ambar">{{ compromiso.estado }}</span>
+                {% else %}
+                <span class="estado gris">{{ compromiso.estado }}</span>
+                {% endif %}
+            </td>
+            <td class="celdas-acciones">
+                <a class="boton" href="{% url 'detalle_compromiso' compromiso.id %}">Ver</a>
+                {% if perms.agenda.change_compromiso %}
+                <a class="boton boton-secundario" href="{% url 'editar_compromiso' compromiso.id %}">Editar</a>
+                {% endif %}
+                {% if perms.agenda.delete_compromiso %}
+                <a class="boton boton-peligro" href="{% url 'borrar_compromiso' compromiso.id %}">Borrar</a>
+                {% endif %}
+            </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="7">No hay compromisos registrados.</td></tr>
+        {% endfor %}
+    </tbody>
+</table>
+<p><a class="boton" href="{% url 'resumen_agenda' %}">Ver resumen de agenda</a></p>
+{% endblock %}

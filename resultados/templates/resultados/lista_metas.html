@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% block title %}Metas{% endblock %}
+{% block content %}
+<div class="cabecera-lista">
+    <h2>Metas y Cumplimiento</h2>
+    <div class="acciones-lista">
+        {% if perms.resultados.add_meta %}
+        <a class="boton" href="{% url 'crear_meta' %}">Nueva meta</a>
+        {% endif %}
+        {% if perms.resultados.add_periodo %}
+        <a class="boton boton-secundario" href="{% url 'crear_periodo' %}">Nuevo período</a>
+        {% endif %}
+    </div>
+</div>
+<a class="enlace-volver" href="{% url 'home' %}">&larr; Volver al inicio</a>
+<form class="filtro-lista" method="get">
+    <input type="search" name="q" value="{{ q }}" placeholder="Filtrar metas…">
+    <button type="submit" class="btn-primario">Filtrar</button>
+    {% if q %}<a class="boton boton-secundario" href="{% url 'lista_metas' %}">Limpiar</a>{% endif %}
+</form>
+<table class="tabla">
+    <thead>
+        <tr>
+            <th>Funcionario</th>
+            <th>Ítem</th>
+            <th>Período</th>
+            <th>Meta</th>
+            <th>Avance</th>
+            <th>% Cumplimiento</th>
+            <th>Ponderado</th>
+            <th>Acciones</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for meta in metas %}
+        <tr>
+            <td>{{ meta.persona_nombre }}</td>
+            <td>{{ meta.item }}</td>
+            <td>{{ meta.periodo_nombre }}</td>
+            <td>{{ meta.meta }}</td>
+            <td>{{ meta.avance }}</td>
+            <td>{{ meta.pct_cumplimiento }}%</td>
+            <td>{{ meta.ponderado }}</td>
+            <td class="celdas-acciones">
+                <a class="boton" href="{% url 'detalle_meta' meta.id %}">Ver</a>
+                {% if perms.resultados.change_meta %}
+                <a class="boton boton-secundario" href="{% url 'editar_meta' meta.id %}">Editar</a>
+                {% endif %}
+                {% if perms.resultados.delete_meta %}
+                <a class="boton boton-peligro" href="{% url 'borrar_meta' meta.id %}">Borrar</a>
+                {% endif %}
+            </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="8">No hay metas registradas.</td></tr>
+        {% endfor %}
+    </tbody>
+</table>
+<div class="acciones">
+    <a class="boton" href="{% url 'tablero_unidad' %}">Ver tablero de delegaciones</a>
+    <a class="boton" href="{% url 'informe_resumen' %}">Ver informe resumen</a>
+</div>
+{% endblock %}

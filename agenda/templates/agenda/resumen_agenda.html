@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% block title %}Resumen de Agenda{% endblock %}
+{% block content %}
+<h2>Resumen de Agenda Colectiva</h2>
+<a class="enlace-volver" href="{% url 'lista_compromisos' %}">&larr; Volver a la agenda</a>
+
+<section class="resumen">
+    <div class="resumen-item">
+        <div class="numero">{{ resumen.total }}</div>
+        <div>Total de compromisos</div>
+    </div>
+    <div class="resumen-item">
+        <div class="numero">{{ resumen.realizado }}</div>
+        <div>Realizados ({{ resumen.por_realizado }}%)</div>
+    </div>
+    <div class="resumen-item">
+        <div class="numero">{{ resumen.pendiente }}</div>
+        <div>Pendientes ({{ resumen.por_pendiente }}%)</div>
+    </div>
+</section>
+
+<h3>Compromisos por estado</h3>
+<table class="tabla">
+    <thead>
+        <tr>
+            <th>Estado</th>
+            <th>Cantidad</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for estado, cantidad in resumen.totales.items %}
+        <tr>
+            <td>{{ estado }}</td>
+            <td>{{ cantidad }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<p class="pendiente">
+    {% if resumen.pendiente > 0 %}
+    Hay compromisos pendientes que requieren seguimiento.
+    {% else %}
+    Todos los compromisos están resueltos.
+    {% endif %}
+</p>
+{% endblock %}

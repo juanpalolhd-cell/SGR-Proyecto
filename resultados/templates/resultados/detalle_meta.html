@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block title %}Meta {{ meta.id }}{% endblock %}
+{% block content %}
+<a class="enlace-volver" href="{% url 'lista_metas' %}">&larr; Volver a metas</a>
+<div class="detalle-caja">
+    <div class="cabecera-lista">
+        <h2>Meta de {{ persona_nombre }}</h2>
+        <div class="acciones-lista">
+            {% if perms.resultados.change_meta %}
+            <a class="boton boton-secundario" href="{% url 'editar_meta' meta.id %}">Editar</a>
+            {% endif %}
+            {% if perms.resultados.delete_meta %}
+            <a class="boton boton-peligro" href="{% url 'borrar_meta' meta.id %}">Borrar</a>
+            {% endif %}
+        </div>
+    </div>
+    <dl>
+        <dt>Ítem</dt>
+        <dd>{{ meta.item }}</dd>
+        <dt>Unidad</dt>
+        <dd>{{ meta.unidad }}</dd>
+        <dt>Período</dt>
+        <dd>{{ periodo.nombre }} ({{ periodo.inicio }} al {{ periodo.termino }})</dd>
+        <dt>Meta objetivo</dt>
+        <dd>{{ meta.meta }}</dd>
+        <dt>Avance</dt>
+        <dd>{{ meta.avance }}</dd>
+        <dt>Ponderador</dt>
+        <dd>{{ meta.ponderador }}%</dd>
+        <dt>% Cumplimiento</dt>
+        <dd>{{ pct_cumplimiento }}%</dd>
+        <dt>Resultado ponderado</dt>
+        <dd>{{ ponderado }} (tope {{ tope }}%)</dd>
+    </dl>
+</div>
+<p>
+    <a class="boton" href="{% url 'resultado_persona' meta.persona_id %}">Ver ficha de resultados</a>
+</p>
+{% endblock %}

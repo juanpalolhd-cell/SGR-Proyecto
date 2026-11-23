@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}SGR{% endblock %} | Sistema de Gestión de Resultados</title>
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+</head>
+<body>
+    <header class="cabecera">
+        <div class="contenedor">
+            <h1 class="logo">SGR</h1>
+            <p class="slogan">Sistema de Gestión de Resultados - Delegaciones Municipales de La Serena</p>
+        </div>
+    </header>
+
+    <nav class="navegacion">
+        <div class="contenedor">
+            {% if user.is_authenticated %}
+            <a href="{% url 'catalog_index' %}">Inicio</a>
+            <a href="{% url 'catalog_lista' 'delegaciones' %}">Organización</a>
+            <a href="{% url 'catalog_lista' 'actividades' %}">Actividades</a>
+            <a href="{% url 'catalog_lista' 'hitos' %}">Agenda</a>
+            <a href="{% url 'catalog_lista' 'asignaciones' %}">Resultados</a>
+            {% if user.is_staff %}
+            <a href="/admin/">Admin</a>
+            {% endif %}
+            <form class="nav-busqueda" action="{% url 'buscar' %}" method="get" role="search">
+                <input type="search" name="q" value="{{ request.GET.q|default:'' }}" placeholder="Buscar datos…" aria-label="Buscar">
+                <button type="submit">Buscar</button>
+            </form>
+            <span class="nav-usuario">
+                {{ user.username }}
+                <form method="post" action="{% url 'logout' %}" style="display:inline">{% csrf_token %}<button class="btn-enlace" type="submit">Cerrar sesión</button></form>
+            </span>
+            {% else %}
+            <a href="{% url 'login' %}">Iniciar sesión</a>
+            {% endif %}
+        </div>
+    <a href="{% url 'catalog_index' %}">Gestión: 17 entidades</a></nav>
+
+    <main class="contenedor contenido">
+        {% if messages and request.resolver_match.url_name != 'login' and request.resolver_match.url_name != 'verificar_codigo' %}
+        <ul class="mensajes">
+            {% for message in messages %}
+            <li class="{{ message.tags }}">{{ message }}</li>
+            {% endfor %}
+        </ul>
+        {% endif %}
+        {% block content %}{% endblock %}
+    </main>
+
+    <footer class="pie">
+        <div class="contenedor">
+            <p>Prototipo académico SGR · Datos ficticios · Django</p>
+        </div>
+    </footer>
+</body>
+</html>

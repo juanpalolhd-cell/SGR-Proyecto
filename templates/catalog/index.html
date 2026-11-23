@@ -1,0 +1,1 @@
+{% extends "base.html" %}{% block title %}Gestión SGR{% endblock %}{% block content %}<h2>Gestión de datos SGR</h2><p>Las 17 entidades de la tercera evaluación. Los cambios están sujetos a tus permisos.</p><div class="detalle-caja"><ul>{% for e in entidades %}<li><a href="{% url 'catalog_lista' e.slug %}">{{ e.nombre }}</a></li>{% endfor %}</ul></div>{% endblock %}

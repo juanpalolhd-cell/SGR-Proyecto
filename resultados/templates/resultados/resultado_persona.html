@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% block title %}{{ resumen.nombre }}{% endblock %}
+{% block content %}
+<a class="enlace-volver" href="{% url 'lista_metas' %}">&larr; Volver a metas</a>
+<div class="detalle-caja">
+    <h2>Resultados de {{ resumen.nombre }}</h2>
+    <dl>
+        <dt>Cargo</dt>
+        <dd>{{ resumen.cargo }}</dd>
+        <dt>Delegación</dt>
+        <dd>{{ resumen.delegacion }}</dd>
+        <dt>Período</dt>
+        <dd>{{ resumen.periodo.nombre }}</dd>
+        <dt>Total ponderado</dt>
+        <dd>{{ resumen.total_ponderado }}%</dd>
+        <dt>Semáforo</dt>
+        <dd>
+            <span class="semaforo-punto {{ resumen.semaforo }}"></span>
+            <span class="estado {{ resumen.semaforo }}">
+                {% if resumen.semaforo == "verde" %}Cumplido{% elif resumen.semaforo == "ambar" %}En riesgo{% else %}Rezagado{% endif %}
+            </span>
+        </dd>
+    </dl>
+</div>
+
+<h3>Metas del período</h3>
+<table class="tabla">
+    <thead>
+        <tr>
+            <th>Ítem</th>
+            <th>Meta</th>
+            <th>Avance</th>
+            <th>Ponderador</th>
+            <th>% Cumplimiento</th>
+            <th>Ponderado</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for meta in resumen.metas %}
+        <tr>
+            <td>{{ meta.item }}</td>
+            <td>{{ meta.meta }}</td>
+            <td>{{ meta.avance }}</td>
+            <td>{{ meta.ponderador }}%</td>
+            <td>{{ meta.pct_cumplimiento }}%</td>
+            <td>{{ meta.ponderado }}</td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="6">Sin metas en este período.</td></tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+{% block title %}{{ actividad.codigo }}{% endblock %}
+{% block content %}
+<a class="enlace-volver" href="{% url 'lista_actividades' %}">&larr; Volver a actividades</a>
+<div class="detalle-caja">
+    <div class="cabecera-lista">
+        <h2>{{ actividad.descripcion }}</h2>
+        <div class="acciones-lista">
+            {% if perms.actividades.change_actividad %}
+            <a class="boton boton-secundario" href="{% url 'editar_actividad' actividad.id %}">Editar</a>
+            {% endif %}
+            {% if perms.actividades.delete_actividad %}
+            <a class="boton boton-peligro" href="{% url 'borrar_actividad' actividad.id %}">Borrar</a>
+            {% endif %}
+        </div>
+    </div>
+    <dl>
+        <dt>Código</dt>
+        <dd>{{ actividad.codigo }}</dd>
+        <dt>Fecha</dt>
+        <dd>{{ actividad.fecha }}</dd>
+        <dt>Acción</dt>
+        <dd>{{ actividad.accion }}</dd>
+        <dt>Contacto</dt>
+        <dd>{{ actividad.contacto }}</dd>
+        <dt>Teléfono</dt>
+        <dd>{{ actividad.telefono }}</dd>
+        <dt>Funcionario</dt>
+        <dd>{{ actividad.persona.nombre }}</dd>
+        <dt>Delegación</dt>
+        <dd>{{ actividad.unidad.nombre }}</dd>
+        <dt>Ítem</dt>
+        <dd>{{ actividad.item }}</dd>
+        <dt>Ingreso a agenda</dt>
+        <dd>{% if actividad.agenda %}Sí{% else %}No{% endif %}</dd>
+        <dt>Estado</dt>
+        <dd>
+            {% if actividad.estado == "Validada" %}
+            <span class="estado verde">{{ actividad.estado }}</span>
+            {% elif actividad.estado == "Pendiente" %}
+            <span class="estado ambar">{{ actividad.estado }}</span>
+            {% else %}
+            <span class="estado gris">{{ actividad.estado }}</span>
+            {% endif %}
+        </dd>
+    </dl>
+</div>
+
+<h3>Evidencias asociadas</h3>
+<table class="tabla">
+    <thead>
+        <tr>
+            <th>Código</th>
+            <th>Fecha</th>
+            <th>Estado</th>
+            <th>Detalle</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for evidencia in evidencias %}
+        <tr>
+            <td>{{ evidencia.codigo }}</td>
+            <td>{{ evidencia.fecha }}</td>
+            <td>
+                {% if evidencia.estado == "Aprobada" %}
+                <span class="estado verde">{{ evidencia.estado }}</span>
+                {% elif evidencia.estado == "Rechazada" %}
+                <span class="estado rojo">{{ evidencia.estado }}</span>
+                {% else %}
+                <span class="estado ambar">{{ evidencia.estado }}</span>
+                {% endif %}
+            </td>
+            <td><a class="boton" href="{% url 'detalle_evidencia' evidencia.id %}">Ver</a></td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="4">Esta actividad no tiene evidencias.</td></tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

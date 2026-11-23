@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block title %}Tablero de Delegaciones{% endblock %}
+{% block content %}
+<h2>Tablero de Delegaciones</h2>
+<a class="enlace-volver" href="{% url 'lista_metas' %}">&larr; Volver a metas</a>
+
+{% for grupo in tablero %}
+<section class="detalle-caja">
+    <h3>{{ grupo.unidad }}</h3>
+    <p><em>{{ grupo.ambito }}</em></p>
+    <table class="tabla">
+        <thead>
+            <tr>
+                <th>Funcionario</th>
+                <th>Cargo</th>
+                <th>Total ponderado</th>
+                <th>Meta esperada</th>
+                <th>Semáforo</th>
+                <th>Ficha</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for m in grupo.miembros %}
+            <tr>
+                <td>{{ m.nombre }}</td>
+                <td>{{ m.cargo }}</td>
+                <td>{{ m.total_ponderado }}%</td>
+                <td>{{ m.expected }}%</td>
+                <td>
+                    <span class="semaforo-punto {{ m.semaforo }}"></span>
+                    <span class="estado {{ m.semaforo }}">{{ m.semaforo }}</span>
+                </td>
+                <td><a class="boton" href="{% url 'resultado_persona' m.persona_id %}">Ver</a></td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="6">Sin funcionarios.</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</section>
+{% endfor %}
+<p class="pendiente">Umbral colectivo de referencia: {{ umbral }}%</p>
+{% endblock %}

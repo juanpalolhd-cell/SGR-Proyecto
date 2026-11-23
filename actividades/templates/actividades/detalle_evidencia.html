@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% block title %}{{ evidencia.codigo }}{% endblock %}
+{% block content %}
+<a class="enlace-volver" href="{% url 'lista_evidencias' %}">&larr; Volver a evidencias</a>
+<div class="detalle-caja">
+    <div class="cabecera-lista">
+        <h2>Evidencia {{ evidencia.codigo }}</h2>
+        <div class="acciones-lista">
+            {% if perms.actividades.change_evidencia %}
+            <a class="boton boton-secundario" href="{% url 'editar_evidencia' evidencia.id %}">Editar</a>
+            {% endif %}
+            {% if perms.actividades.delete_evidencia %}
+            <a class="boton boton-peligro" href="{% url 'borrar_evidencia' evidencia.id %}">Borrar</a>
+            {% endif %}
+        </div>
+    </div>
+    <dl>
+        <dt>Actividad</dt>
+        <dd>{{ actividad.codigo }} - {{ actividad.descripcion }}</dd>
+        <dt>Ruta / vínculo</dt>
+        <dd>{{ evidencia.ruta }}</dd>
+        <dt>Autor</dt>
+        <dd>{{ evidencia.autor }}</dd>
+        <dt>Fecha</dt>
+        <dd>{{ evidencia.fecha }}</dd>
+        <dt>Verificador</dt>
+        <dd>{% if evidencia.verificador %}{{ evidencia.verificador }}{% else %}Sin asignar{% endif %}</dd>
+        <dt>Estado</dt>
+        <dd>
+            {% if evidencia.estado == "Aprobada" %}
+            <span class="estado verde">{{ evidencia.estado }}</span>
+            {% elif evidencia.estado == "Rechazada" %}
+            <span class="estado rojo">{{ evidencia.estado }}</span>
+            {% else %}
+            <span class="estado ambar">{{ evidencia.estado }}</span>
+            {% endif %}
+        </dd>
+        <dt>Observación</dt>
+        <dd>{{ evidencia.observacion }}</dd>
+    </dl>
+</div>
+<p>
+    <a class="boton" href="{% url 'detalle_actividad' actividad.id %}">Ver actividad</a>
+</p>
+{% endblock %}

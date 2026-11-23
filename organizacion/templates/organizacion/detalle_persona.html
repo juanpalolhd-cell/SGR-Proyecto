@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% block title %}{{ persona.nombre }}{% endblock %}
+{% block content %}
+<a class="enlace-volver" href="{% url 'lista_personas' %}">&larr; Volver a funcionarios</a>
+<div class="detalle-caja">
+    <div class="cabecera-lista">
+        <h2>{{ persona.nombre }}</h2>
+        <div class="acciones-lista">
+            {% if perms.organizacion.change_persona %}
+            <a class="boton boton-secundario" href="{% url 'editar_persona' persona.id %}">Editar</a>
+            {% endif %}
+            {% if perms.organizacion.delete_persona %}
+            <a class="boton boton-peligro" href="{% url 'borrar_persona' persona.id %}">Borrar</a>
+            {% endif %}
+        </div>
+    </div>
+    <dl>
+        <dt>Cargo</dt>
+        <dd>{{ persona.cargo.nombre }}</dd>
+        <dt>Delegación</dt>
+        <dd>{{ persona.delegacion.nombre }}</dd>
+        <dt>Roles</dt>
+        <dd>{{ persona.roles|join:", " }}</dd>
+        <dt>Estado</dt>
+        <dd>
+            {% if persona.estado == "Activo" %}
+            <span class="estado verde">{{ persona.estado }}</span>
+            {% else %}
+            <span class="estado gris">{{ persona.estado }}</span>
+            {% endif %}
+        </dd>
+    </dl>
+</div>
+
+<h3>Funciones del cargo</h3>
+<ul>
+    {% for funcion in persona.cargo.funciones %}
+    <li>{{ funcion }}</li>
+    {% empty %}
+    <li>Sin funciones definidas.</li>
+    {% endfor %}
+</ul>
+
+<p>
+    <a class="boton" href="{% url 'resultado_persona' persona.id %}">Ver resultados de este funcionario</a>
+</p>
+{% endblock %}

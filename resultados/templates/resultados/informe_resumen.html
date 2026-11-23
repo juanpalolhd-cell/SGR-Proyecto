@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% block title %}Informe Resumen{% endblock %}
+{% block content %}
+<h2>Informe Resumen de Gestión</h2>
+<a class="enlace-volver" href="{% url 'lista_metas' %}">&larr; Volver a metas</a>
+
+<section class="resumen">
+    <div class="resumen-item">
+        <div class="numero">{{ promedio }}%</div>
+        <div>Promedio ponderado</div>
+    </div>
+    <div class="resumen-item">
+        <div class="numero">{{ semaforos.verde }}</div>
+        <div>Cumplidos</div>
+    </div>
+    <div class="resumen-item">
+        <div class="numero">{{ semaforos.ambar }}</div>
+        <div>En riesgo</div>
+    </div>
+    <div class="resumen-item">
+        <div class="numero">{{ semaforos.rojo }}</div>
+        <div>Rezagados</div>
+    </div>
+</section>
+
+<table class="tabla">
+    <thead>
+        <tr>
+            <th>Funcionario</th>
+            <th>Delegación</th>
+            <th>Cargo</th>
+            <th>Total ponderado</th>
+            <th>Semáforo</th>
+            <th>Ficha</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for informe in informes %}
+        <tr>
+            <td>{{ informe.nombre }}</td>
+            <td>{{ informe.delegacion }}</td>
+            <td>{{ informe.cargo }}</td>
+            <td>{{ informe.total_ponderado }}%</td>
+            <td>
+                <span class="semaforo-punto {{ informe.semaforo }}"></span>
+                <span class="estado {{ informe.semaforo }}">{{ informe.semaforo }}</span>
+            </td>
+            <td><a class="boton" href="{% url 'resultado_persona' informe.persona_id %}">Ver</a></td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="6">Sin datos.</td></tr>
+        {% endfor %}
+    </tbody>
+</table>
+<p>Resultado ponderado tope: {{ tope }}% · Umbral colectivo de referencia: {{ umbral }}%</p>
+{% endblock %}

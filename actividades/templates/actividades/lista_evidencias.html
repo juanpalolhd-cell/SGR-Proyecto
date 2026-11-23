@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% block title %}Evidencias{% endblock %}
+{% block content %}
+<div class="cabecera-lista">
+    <h2>Evidencias</h2>
+    <div class="acciones-lista">
+        {% if perms.actividades.add_evidencia %}
+        <a class="boton" href="{% url 'crear_evidencia' %}">Nueva evidencia</a>
+        {% endif %}
+    </div>
+</div>
+<a class="enlace-volver" href="{% url 'lista_actividades' %}">&larr; Volver a actividades</a>
+<form class="filtro-lista" method="get">
+    <input type="search" name="q" value="{{ q }}" placeholder="Filtrar evidencias…">
+    <button type="submit" class="btn-primario">Filtrar</button>
+    {% if q %}<a class="boton boton-secundario" href="{% url 'lista_evidencias' %}">Limpiar</a>{% endif %}
+</form>
+<table class="tabla">
+    <thead>
+        <tr>
+            <th>Código</th>
+            <th>Actividad</th>
+            <th>Autor</th>
+            <th>Fecha</th>
+            <th>Estado</th>
+            <th>Acciones</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for evidencia in evidencias %}
+        <tr>
+            <td>{{ evidencia.codigo }}</td>
+            <td>{{ evidencia.actividad.codigo }}</td>
+            <td>{{ evidencia.autor }}</td>
+            <td>{{ evidencia.fecha }}</td>
+            <td>
+                {% if evidencia.estado == "Aprobada" %}
+                <span class="estado verde">{{ evidencia.estado }}</span>
+                {% elif evidencia.estado == "Rechazada" %}
+                <span class="estado rojo">{{ evidencia.estado }}</span>
+                {% else %}
+                <span class="estado ambar">{{ evidencia.estado }}</span>
+                {% endif %}
+            </td>
+            <td class="celdas-acciones">
+                <a class="boton" href="{% url 'detalle_evidencia' evidencia.id %}">Ver</a>
+                {% if perms.actividades.change_evidencia %}
+                <a class="boton boton-secundario" href="{% url 'editar_evidencia' evidencia.id %}">Editar</a>
+                {% endif %}
+                {% if perms.actividades.delete_evidencia %}
+                <a class="boton boton-peligro" href="{% url 'borrar_evidencia' evidencia.id %}">Borrar</a>
+                {% endif %}
+            </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="6">No hay evidencias registradas.</td></tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block title %}Buscar{% endblock %}
+{% block content %}
+<h2>Resultados de búsqueda</h2>
+<a class="enlace-volver" href="{% url 'home' %}">&larr; Volver al inicio</a>
+
+<form class="filtro-lista" action="{% url 'buscar' %}" method="get">
+    <input type="search" name="q" value="{{ q }}" placeholder="Buscar por nombre, código o descripción…">
+    <button type="submit" class="btn-primario">Buscar</button>
+</form>
+
+{% if q %}
+<p class="ayuda-busqueda">Se encontraron {{ total }} resultado{{ total|pluralize:"s" }} para «{{ q }}».</p>
+{% else %}
+<p class="ayuda-busqueda">Escribe un término para buscar en delegaciones, funcionarios, actividades, agenda y resultados.</p>
+{% endif %}
+
+{% for grupo in grupos %}
+<section class="grupo-busqueda">
+    <h3>{{ grupo.titulo }}</h3>
+    <ul class="lista-resultados">
+        {% for item in grupo.items %}
+        <li>
+            <a href="{% url 'catalog_detalle' item.entidad item.pk %}">{{ item.etiqueta }}</a>
+            {% if item.extra %}<span class="extra">{{ item.extra }}</span>{% endif %}
+        </li>
+        {% endfor %}
+    </ul>
+</section>
+{% empty %}
+{% if q %}
+<div class="detalle-caja"><p>No hay coincidencias.</p></div>
+{% endif %}
+{% endfor %}
+{% endblock %}
