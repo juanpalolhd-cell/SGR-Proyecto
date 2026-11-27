@@ -10,6 +10,7 @@ from django.shortcuts import render
 from django.urls import reverse
 from django.views.generic import ListView, DetailView, CreateView, UpdateView, DeleteView
 from .catalog import SPECS, permission, menu
+from .reglas import es_acceso_total, mensaje_periodo_cerrado, periodo_cerrado, periodos_cerrados_de
 
 @login_required
 def index(request):
@@ -43,7 +44,9 @@ class CatalogMixin(PermissionRequiredMixin):
                 elif isinstance(value, bool): value = "Sí" if value else "No"
                 values.append((field.verbose_name, value if value is not None else "—"))
             if slug == "funcionarios":
-                values += [("Último acceso", obj.usuario.last_login if obj.usuario_id else "Pendiente de vincular"), ("Grupos de acceso (solo lectura)", ", ".join(obj.usuario.groups.values_list("name", flat=True)) if obj.usuario_id else "—"), ("Roles relacionados (solo lectura)", ", ".join(obj.roles_rel.values_list("nombre", flat=True)))]
+                ctx["puede_establecer_clave"] = bool(obj.usuario_id) and es_acceso_total(self.request.user) and obj.usuario_id != self.request.user.pk
+                ctx["nueva_cuenta"] = self.request.GET.get("nueva_cuenta") == "1" and bool(obj.usuario_id)
+                values += [("Contraseña", ("Establecida" if obj.usuario.has_usable_password() else "Pendiente: la cuenta aún no tiene contraseña utilizable") if obj.usuario_id else "—"), ("Último acceso", (obj.usuario.last_login or "Nunca") if obj.usuario_id else "Pendiente de vincular"), ("Grupos de acceso (solo lectura)", ", ".join(obj.usuario.groups.values_list("name", flat=True)) if obj.usuario_id else "—"), ("Roles relacionados (solo lectura)", ", ".join(obj.roles_rel.values_list("nombre", flat=True)))]
             if slug == "roles": values.append(("Grupo de permisos (solo lectura)", obj.grupo or "Asignar por administración protegida"))
             ctx["valores"] = values
             ctx["objeto_etiqueta"] = str(obj)
@@ -71,13 +74,25 @@ class Detalle(CatalogMixin, DetailView):
 
 class GuardarMixin(CatalogMixin):
     template_name = "crud/formulario.html"
+    def get_form(self, form_class=None):
+        form = super().get_form(form_class)
+        form.usuario = self.request.user
+        return form
     @transaction.atomic
     def form_valid(self, form):
         response = super().form_valid(form)
         messages.success(self.request, "Registro guardado correctamente.")
+        for aviso in getattr(form, "advertencias", []):
+            messages.warning(self.request, aviso)
         return response
 
-class Crear(GuardarMixin, CreateView): action = "add"
+class Crear(GuardarMixin, CreateView):
+    action = "add"
+    def get_success_url(self):
+        # Tras crear un funcionario con cuenta nueva, ir a su detalle para establecer la contraseña inicial.
+        if self.kwargs["entidad"] == "funcionarios" and getattr(self, "object", None) is not None and self.object.usuario_id and not self.object.usuario.has_usable_password():
+            return reverse("catalog_detalle", args=["funcionarios", self.object.pk]) + "?nueva_cuenta=1"
+        return super().get_success_url()
 class Editar(GuardarMixin, UpdateView): action = "change"
 
 class Borrar(CatalogMixin, DeleteView):
@@ -85,6 +100,10 @@ class Borrar(CatalogMixin, DeleteView):
     action = "delete"
     template_name = "crud/confirmar_borrar.html"
     def form_valid(self, form):
+        cerrados = [self.object] if self.kwargs["entidad"] == "trimestres" and periodo_cerrado(self.object) else periodos_cerrados_de(self.object)
+        if cerrados:
+            messages.error(self.request, mensaje_periodo_cerrado(cerrados))
+            return self.render_to_response(self.get_context_data(form=form), status=200)
         try:
             with transaction.atomic(): response = super().form_valid(form)
         except (ProtectedError, RestrictedError):

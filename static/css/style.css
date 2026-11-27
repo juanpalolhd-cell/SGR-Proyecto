@@ -472,3 +472,19 @@ h3 {
     flex-wrap: wrap;
     gap: 10px;
 }
+
+/* Tubo de trabajo, reglas y claves (V4.1) */
+.mensajes .warning { background: #fff4e0; border-left: 4px solid #f39c12; }
+.aviso { padding: 10px 14px; border-radius: 4px; margin-bottom: 12px; }
+.aviso-rojo { background: #fdecea; border-left: 4px solid #e74c3c; }
+.aviso-ambar { background: #fff4e0; border-left: 4px solid #f39c12; }
+.aviso-info { background: #eaf2fb; border-left: 4px solid #2e86c1; }
+.fila-vencida td { background: #fdecea; }
+.fila-proxima td { background: #fff8e6; }
+.rojo-texto { color: #c0392b !important; }
+.filtro-lista select, .filtro-lista label { margin-right: 6px; }
+.ayuda { font-size: 0.85rem; color: #555; }
+.nav-usuario a { color: inherit; margin-right: 8px; }
+
+/* V4.2: contraseña temporal mostrada una sola vez */
+.clave-temporal code { display: inline-block; font-size: 1.4em; letter-spacing: 2px; padding: 8px 14px; background: #fff; border: 1px dashed #c77700; user-select: all; }

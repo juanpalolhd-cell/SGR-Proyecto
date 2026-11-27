@@ -21,8 +21,10 @@
             <a href="{% url 'catalog_index' %}">Inicio</a>
             <a href="{% url 'catalog_lista' 'delegaciones' %}">Organización</a>
             <a href="{% url 'catalog_lista' 'actividades' %}">Actividades</a>
-            <a href="{% url 'catalog_lista' 'hitos' %}">Agenda</a>
+            <a href="{% url 'catalog_lista' 'hitos' %}">Hitos</a>
+            {% if perms.agenda.view_compromiso %}<a href="{% url 'lista_compromisos' %}">Tubo de trabajo</a>{% endif %}
             <a href="{% url 'catalog_lista' 'asignaciones' %}">Resultados</a>
+            {% if perms.resultados.view_meta %}<a href="{% url 'tablero_unidad' %}">Tablero</a>{% endif %}
             {% if user.is_staff %}
             <a href="/admin/">Admin</a>
             {% endif %}
@@ -32,6 +34,7 @@
             </form>
             <span class="nav-usuario">
                 {{ user.username }}
+                <a href="{% url 'cambiar_clave' %}">Cambiar contraseña</a>
                 <form method="post" action="{% url 'logout' %}" style="display:inline">{% csrf_token %}<button class="btn-enlace" type="submit">Cerrar sesión</button></form>
             </span>
             {% else %}

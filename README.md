@@ -100,6 +100,75 @@ Las delegaciones pueden darse de alta inicialmente sin delegado para resolver el
 
 La comprobación de migración comparó las columnas originales de todas las tablas de negocio y las cuentas originales, tanto en copia como en el PC instalado: 72 filas de 15 tablas conservadas, cero filas originales desaparecidas o alteradas. Se ensayó tanto BD limpia como copia de la BD existente. Las restricciones nuevas podrían rechazar datos históricos inválidos en otra BD: auditar y respaldar antes; no corregir ni borrar valores reales automáticamente.
 
+## V4.1 — Tubo de trabajo, reglas del cliente y gestión de contraseñas (26/11/2026)
+
+Todo está en el sitio público, no en Django Admin.
+
+**Tubo de trabajo** (menú «Tubo de trabajo» → `/agenda/`; «Hitos» sigue en `/gestion/hitos/`)
+- `Compromiso.estado` tiene ahora 4 estados controlados: Ingresado, Pendiente, En proceso y Realizado. Transiciones permitidas, validadas en `Compromiso.clean()`: Ingresado → Pendiente o En proceso; Pendiente ↔ En proceso; Pendiente o En proceso → Realizado; Realizado → En proceso (reapertura, con observación obligatoria). Un compromiso nuevo nace Ingresado o Pendiente.
+- Migración `agenda.0005` normaliza los estados antiguos sin borrar nada. Los sinónimos («en_proceso», «realizada»…) pasan a su estado canónico y los valores desconocidos pasan a Pendiente. El valor original queda en observaciones y en el historial, y migrate lo informa por pantalla. Es reversible.
+- Plazos: se marcan como vencido, próximo a vencer (umbral `dias_aviso_vencimiento` en `data/resultados.json`, por defecto 7 días), en plazo, realizado y realizado fuera de plazo. Aparecen en la lista (fila destacada), en el detalle y en el resumen, y hay filtros por estado, plazo, responsable y delegación.
+- `HistorialEstado` guarda cada cambio de estado o de fecha comprometida: usuario, fecha, estado anterior y nuevo, y observación. Se muestra en el detalle. Cambiar la fecha exige indicar el motivo.
+- Resumen (`/agenda/resumen/`): totales por estado, por responsable y por delegación, con % realizado y % pendiente, vencidos, próximos y fuera de plazo, y filtro por rango de fechas.
+- Permisos: no cambian para Compromiso. Consulta solo ve; Gestión crea y edita; Acceso total además elimina. `HistorialEstado` es de solo lectura para los tres roles. `setup_roles` (idempotente) deja: Acceso total=85, Intermedio=38, Minimo=22 permisos.
+
+**Reglas del cliente**
+- RN-001: al guardar una asignación se bloquea si la suma de ponderaciones del funcionario en el trimestre supera 100 %. Si queda bajo 100 % solo se advierte, porque las asignaciones se registran de a una y los datos existentes tienen sumas de 50 %. La suma también se muestra en el tablero y en la ficha.
+- RN-003/RN-009: el avance calculado cuenta las actividades válidas (Validada, Aprobada o Realizada) y las gestiones atendidas del período. Si el catálogo exige evidencia, solo cuentan las que tienen una evidencia Aprobada; las Rechazadas o Anuladas nunca cuentan. Se muestra junto al avance manual. El indicador usa el avance indicado en el parámetro `fuente_avance` («manual» por defecto, para no alterar los resultados históricos; «calculado» aplica la regla completa). El avance manual nunca se sobrescribe.
+- RN-006: el tablero y el informe calculan el cumplimiento colectivo por delegación (promedio del total ponderado de quienes tienen metas) y lo comparan con `umbral_colectivo`.
+- RN-007: la meta esperada al día usa la fecha real (`date.today()`) con el inicio y el término del período, en días corridos y con un máximo de 100 %. Ya no usa 15 días fijos. El tablero, el informe y la ficha permiten elegir el período; por defecto muestran el vigente.
+- RN-010: el código es de solo lectura al editar.
+- RN-012: se permiten como máximo 3 gestiones activas (no anuladas) por persona usuaria.
+- RN-013: un período Cerrado bloquea crear, editar y eliminar sus asignaciones, actividades, gestiones y evidencias, así como editar o eliminar el propio período. Solo Acceso total puede reabrirlo, y la reapertura queda en el log `sgr.auditoria`.
+- Teléfono (Vecino y Actividad): `RegexValidator`, por ejemplo +56 9 1234 5678.
+- Evidencia y trimestre: el estado se elige de una lista (Registrada, Pendiente, Aprobada, Rechazada o Anulada; Abierto o Cerrado). Un valor antiguo distinto se conserva.
+- RN-011 (felicitaciones y penalizaciones): no se implementa. La guía indica que sus valores «requieren definición oficial». Queda como trabajo futuro.
+
+**Gestión de contraseñas**
+- `/cuenta/clave/` (enlace «Cambiar contraseña» en el menú): cualquier usuario con sesión cambia su contraseña indicando la actual (`PasswordChangeView` y `PasswordChangeDoneView`).
+- `/cuenta/funcionarios/<id>/clave/`, solo Acceso total (o superusuario): establece la contraseña inicial o la restablece con `SetPasswordForm`, de modo que se aplican `AUTH_PASSWORD_VALIDATORS`. Hay un enlace desde el detalle del funcionario y desde el aviso que aparece después de crear un funcionario con `nuevo_usuario`. No permite tomar cuentas staff o superusuario si quien lo hace no es superusuario, y para la propia cuenta deriva a «Cambiar contraseña». La contraseña nunca se muestra, ni se registra, ni se envía.
+- El detalle del funcionario indica si la contraseña está «Establecida» o «Pendiente» (nunca muestra el hash).
+- La recuperación por correo se agregó en la V4.2 (ver la sección siguiente).
+
+## V4.2 — Contraseña temporal, cambio obligatorio y recuperación por correo (26/11/2026)
+
+Todo está en el sitio público (no en Django Admin) y en español.
+
+**Contraseña temporal** (`/cuenta/funcionarios/<id>/clave/`, solo Acceso total)
+- Al crear un funcionario con `nuevo_usuario`, el aviso del detalle ofrece «Generar contraseña temporal»; la misma opción existe para restablecer una cuenta.
+- Se genera con `secrets` (16 caracteres, con minúsculas, mayúsculas, dígitos y símbolos, sin caracteres ambiguos) y se comprueba con `AUTH_PASSWORD_VALIDATORS`. Solo se guarda el hash.
+- Se muestra **una sola vez** en la página de confirmación (respuesta `no-store`). No se escribe en logs, ni en `messages`, ni en la base de datos.
+- Opcionalmente se envía por correo, solo si la cuenta tiene correo y el servidor tiene SMTP configurado. Con los backends de consola o de archivo no se ofrece, porque escribirían la contraseña en la consola o en disco.
+- Vence después de `SGR_CLAVE_TEMPORAL_HORAS` (72 por defecto). Después, el inicio de sesión se rechaza con el mensaje «Su contraseña temporal venció…», y una sesión abierta con ella se cierra.
+- La contraseña escrita a mano por Acceso total se trata igual: obliga a cambiarla y vence en el mismo plazo.
+
+**Cambio obligatorio al primer ingreso**
+- Modelo `organizacion.EstadoClave` (uno a uno con User): `debe_cambiar_clave`, `marcado_en`, `motivo`, `vence_en` y `cambiada_en`. No guarda contraseñas. Las cuentas existentes no tienen registro y por eso no se ven afectadas: no se restableció ninguna contraseña.
+- `sgr.middleware.CambioClaveObligatorioMiddleware` redirige a `/cuenta/clave/` mientras la bandera esté activa. Solo permite esa página, el cierre de sesión y `/static/`.
+- Al cambiarla, `PasswordChangeView` llama a `update_session_auth_hash`: la sesión actual sigue y las demás sesiones de la cuenta quedan invalidadas. La bandera se limpia.
+- `sgr.backends.ClaveTemporalBackend` (en `AUTHENTICATION_BACKENDS`) rechaza las contraseñas asignadas vencidas, también en `/admin/`.
+- `setup_roles` no da permisos sobre `EstadoClave` a ningún grupo (sigue siendo idempotente: 85/38/22).
+
+**Recuperación por correo** (`/cuenta/recuperar/`, enlace «¿Olvidó su contraseña?» en el login)
+- Usa las vistas de Django `PasswordResetView`, `Done`, `Confirm` y `Complete`, con plantillas en español.
+- El enlace sirve una sola vez (generador de tokens de Django) y vence según `DJANGO_PASSWORD_RESET_TIMEOUT` (3600 s por defecto).
+- Siempre da la misma respuesta, exista o no el correo. Las cuentas inactivas o sin contraseña utilizable no reciben correo.
+- Límite con la caché: `SGR_RECUPERACION_LIMITE` (5) solicitudes por `SGR_RECUPERACION_VENTANA` (3600 s), por IP (responde 429) y por correo (respuesta genérica, sin enviar). Detrás de nginx use `SGR_PROXY_IP_HEADER=HTTP_X_FORWARDED_FOR`. Con varios procesos de gunicorn use `SGR_CACHE=db` y `manage.py createcachetable`.
+- El enlace se arma con `SGR_URL_PUBLICA` (por ejemplo `https://sgr.ejemplo.cl`) o, si falta, con el host de la petición. **En producción debe usarse HTTPS**: por HTTP el enlace y la contraseña nueva viajan sin cifrar. El kit HTTPS deja `SGR_URL_PUBLICA` en https.
+- Correo: `DJANGO_EMAIL_BACKEND` y `DJANGO_EMAIL_HOST`, `_PORT`, `_USE_TLS`, `_USE_SSL`, `_HOST_USER`, `_HOST_PASSWORD` y `DJANGO_DEFAULT_FROM_EMAIL` se leen solo del entorno (`/etc/sgr/sgr.env` en el servidor; marcadores en `.env.example`). En local (`settings_pruebas`) se usa la consola; en producción sin configuración se usa `dummy` y el sitio indica que la recuperación no está disponible.
+- Pruebas: 22 nuevas en `sgr/tests_v42.py`, con correo `locmem`.
+
+## HTTPS — preparado en el kit, pendiente de activar (26/11/2026)
+
+Estado honesto: **HTTPS está configurado en el kit de despliegue, pero todavía no está activo en AWS**. El 26/11/2026 el laboratorio estaba apagado (44.213.253.178 no responde y las credenciales de AWS Academy estaban vencidas), así que no se pudo activar. Mientras no se ejecute el kit, el sitio sigue en `http://44.213.253.178/`.
+
+- Código (`sgr/settings.py`), todo por variables de entorno para que el desarrollo local siga por HTTP: `DJANGO_SECURE_PROXY_SSL_HEADER` (confía en `X-Forwarded-Proto` de nginx), `DJANGO_SECURE_COOKIES` (cookies de sesión y CSRF solo por HTTPS), `DJANGO_SECURE_SSL_REDIRECT` (opcional; nginx ya redirige), `DJANGO_SECURE_HSTS_SECONDS` y las opciones de subdominios y preload (desactivadas). Con `DJANGO_DEBUG=False` las dos primeras quedan activas por defecto, igual que antes.
+- Kit `SGR_HTTPS_despliegue/activar_https.sh` (idempotente): respalda nginx y `sgr.env`; instala certbot (dnf o pip); usa `44-213-253-178.sslip.io` (o el nombre que se indique); pide un certificado de Let's Encrypt por webroot y, si falla, usa uno autofirmado y lo avisa; configura 443 (TLS 1.2/1.3), la redirección 80 → 443 y HSTS moderado (3600 s, solo con Let's Encrypt); deja la renovación automática con un temporizador de systemd; agrega el nombre a `DJANGO_ALLOWED_HOSTS` y `DJANGO_CSRF_TRUSTED_ORIGINS`, cambia `SGR_URL_PUBLICA` a https y activa las opciones seguras sin mostrar valores; reinicia; hace la prueba de humo (login, redirección, admin, estáticos, cookie Secure, POST con y sin CSRF) y deja un `revertir.sh`.
+- Se probó en una simulación local (nginx real, Django en modo producción): ruta con Let's Encrypt simulado, ruta de respaldo autofirmado, segunda ejecución sin cambios y reversión a HTTP.
+- Pruebas: 149 aprobadas (138 + 11 de HTTPS en `sgr/tests_https.py`).
+- Requiere abrir el puerto 443 en el grupo de seguridad de la instancia (instrucciones en el kit).
+- `sslip.io` es un servicio DNS gratuito de terceros: si deja de funcionar, el nombre no resolverá. Para uso real conviene un dominio propio.
+
 ## Pruebas y evidencias
 
 ```console
@@ -108,7 +177,7 @@ python manage.py makemigrations --check --dry-run --settings=sgr.settings_prueba
 python manage.py test --settings=sgr.settings_pruebas --noinput
 ```
 
-84 tests aprobados en la copia aislada. Hay matriz CRUD/roles de las 17 entidades, acceso directo GET/POST, validaciones, errores sin guardado, integridad referencial, login/logout, CSRF, 404 y next seguro. Los tests usan una BD de prueba, nunca producción. Se actualizaron pruebas antiguas para logout POST y formularios completos, manteniendo regresiones de las URLs anteriores; sus escrituras utilizan el mismo CRUD validado mediante sgr.legacy.
+149 tests aprobados en la copia aislada (84 anteriores + 32 de V4.1 en `sgr/tests_v41.py` + 22 de V4.2 en `sgr/tests_v42.py` + 11 de HTTPS en `sgr/tests_https.py`). Hay matriz CRUD/roles de las 17 entidades, acceso directo GET/POST, validaciones, errores sin guardado, integridad referencial, login/logout, CSRF, 404 y next seguro. Los tests usan una BD de prueba, nunca producción. Se actualizaron pruebas antiguas para logout POST y formularios completos, manteniendo regresiones de las URLs anteriores; sus escrituras utilizan el mismo CRUD validado mediante sgr.legacy.
 
 `Evidencias.pdf` (42 páginas) documenta los resultados automatizados reales, la verificación del despliegue en AWS y 43 capturas de pantalla reales tomadas el 13/11/2026 en http://44.213.253.178/, con fecha, hora, usuario y URL; las mismas imágenes están en `capturas_evidencia/` y se describen en `evidencias.md`. No incluye capturas inventadas ni editadas y ninguna muestra contraseñas. La sección «Pendientes que NO se declaran aprobados» de ese documento enumera lo que queda por completar.
 
@@ -121,9 +190,11 @@ URL: http://44.213.253.178/ . El 13/11/2026 se desplegó en AWS el mismo código
 - Puesta en marcha: respaldo previo de la aplicación, de la configuración y de la BD (más una instantánea de RDS); migraciones aplicadas sin pendientes; `setup_roles` sin `--create-users` (no se crearon ni restablecieron cuentas); `demo_evaluacion` no destructivo; `collectstatic` para los estáticos que entrega nginx.
 - Verificación: inicio y cierre de sesión (logout solo POST; GET responde 405), matriz de permisos con cuentas normales Consulta y Gestión (403 por URL directa), CRUD de las 17 entidades, persistencia en RDS (registro de prueba creado, comprobado y eliminado), borrado protegido con mensaje, formulario inválido sin guardar, CSRF y 404. Resultados y capturas en `Evidencias.pdf`.
 
+Estado de V4.1 y V4.2 en AWS: **todavía no desplegadas**. El 26/11/2026 el laboratorio estaba apagado (44.213.253.178 no responde), así que AWS sigue ejecutando la versión del 13/11. El paquete y el script de despliegue (`sgr_v42_deploy.tgz` y `deploy_v42.sh`, que incluyen la V4.1; el script respalda la app, la configuración y la BD, y luego ejecuta migrate, createcachetable, setup_roles sin crear usuarios, collectstatic, reinicio y prueba de humo) se entregan aparte, junto al ZIP. El correo real requiere completar las variables SMTP en `/etc/sgr/sgr.env`. Después de la V4.2 se activa HTTPS con `activar_https.sh` (ver sección HTTPS).
+
 Consideraciones:
 
-- El sitio funciona por HTTP, sin HTTPS. No reutilizar contraseñas personales en estas cuentas de prueba; HTTPS es recomendable para un uso real.
+- El sitio desplegado funciona todavía por HTTP. HTTPS está preparado en el kit `SGR_HTTPS_despliegue` y queda pendiente de activar cuando el laboratorio esté encendido; después la URL será `https://44-213-253-178.sslip.io/`. Hasta entonces, no reutilizar contraseñas personales en estas cuentas de prueba.
 - El entorno es AWS Academy: para que la URL responda, el laboratorio debe estar iniciado (EC2 y RDS en ejecución). Las credenciales de AWS Academy son temporales y no forman parte de la entrega.
 - Las credenciales de las cuentas de prueba (Consulta y Gestión) se entregan por un medio privado; este README no contiene contraseñas ni hashes.
 

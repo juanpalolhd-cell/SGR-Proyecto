@@ -2,21 +2,43 @@
 from django import forms
 from django.contrib.auth.models import User
 from django.db import transaction
+from django.db.models import Sum
+from decimal import Decimal
+import logging
+from sgr.reglas import es_acceso_total, normalizar, periodo_cerrado
 from organizacion.models import Unidad, Persona, Cargo, Rol, Territorio, Vecino, JuntaVecinos, Participacion, TipoAtencion, SubAtencion
 from agenda.models import Hito
 from actividades.models import Actividad, Evidencia, GestionSocial
 from resultados.models import Periodo, Meta, CatalogoMeta
 
+logger = logging.getLogger("sgr.auditoria")
+
+
+def _choice_con_legado(field, opciones, valor_actual):
+    """Lista cerrada de estados que conserva un valor antiguo si el registro lo tiene."""
+    choices = list(opciones)
+    if valor_actual and valor_actual not in [v for v, _ in choices]:
+        choices.append((valor_actual, f"{valor_actual} (valor anterior)"))
+    return forms.ChoiceField(choices=choices, label=field.label, required=field.required, help_text=field.help_text, widget=forms.Select(attrs={"class": "campo"}))
+
+
 class BaseForm(forms.ModelForm):
     required_fields = ()
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.usuario = None  # lo asigna la vista; permite reglas que dependen del rol
+        self.advertencias = []  # avisos no bloqueantes que la vista muestra al guardar
         for name, field in self.fields.items():
             field.widget.attrs.setdefault("class", "campo")
             if isinstance(field, forms.DateField):
                 field.widget = forms.DateInput(format="%Y-%m-%d", attrs={"type": "date", "class": "campo"})
             if name == "codigo":
-                field.help_text = "Único. Si lo deja vacío, se genera automáticamente."
+                if self.instance.pk:
+                    # RN-010: el código es inmutable una vez creado.
+                    field.disabled = True
+                    field.help_text = "Inmutable: no se puede cambiar después de crear el registro (RN-010)."
+                else:
+                    field.help_text = "Único. Si lo deja vacío, se genera automáticamente. No podrá cambiarse después."
         for name in self.required_fields:
             self.fields[name].required = True
 
@@ -44,7 +66,7 @@ class RolForm(BaseForm):
         fields = ["codigo", "nombre", "descripcion", "estado"]
 
 class FuncionarioForm(BaseForm):
-    nuevo_usuario = forms.CharField(max_length=150, required=False, help_text="Solo para crear una cuenta nueva sin acceso inicial. Su contraseña se establece por un administrador en el medio protegido; no se envía por correo.")
+    nuevo_usuario = forms.CharField(max_length=150, required=False, help_text="Solo para crear una cuenta nueva. Se crea sin contraseña utilizable; después, un usuario con Acceso total genera una contraseña temporal (se muestra una sola vez y vence) o la escribe desde el detalle del funcionario. El funcionario deberá cambiarla al ingresar.")
     required_fields = ("nombres", "apellidos", "rut", "correo")
     class Meta:
         model = Persona
@@ -146,6 +168,22 @@ class AsignacionForm(BaseForm):
     class Meta:
         model = Meta
         fields = ["persona", "catalogo", "periodo", "meta", "ponderador", "fecha_asignacion", "observacion", "estado"]
+    def clean(self):
+        data = super().clean()
+        persona, periodo, ponderador = data.get("persona"), data.get("periodo"), data.get("ponderador")
+        if persona and periodo and ponderador is not None:
+            otras = Meta.objects.filter(persona=persona, periodo=periodo, estado=True)
+            if self.instance.pk:
+                otras = otras.exclude(pk=self.instance.pk)
+            suma_otras = otras.aggregate(s=Sum("ponderador"))["s"] or Decimal("0")
+            total = suma_otras + (ponderador if data.get("estado") else Decimal("0"))
+            if total > 100:
+                # Bloquea: superar 100 % nunca se corrige agregando asignaciones.
+                self.add_error("ponderador", f"La suma de ponderaciones de {persona} en {periodo} sería {total:g} %; no puede superar 100 % (RN-001). Ya hay {suma_otras:g} % asignado en otras metas activas.")
+            elif total < 100:
+                # Advierte: las asignaciones se registran de a una; bloquear impediría completarlas.
+                self.advertencias.append(f"Atención RN-001: la suma de ponderaciones de {persona} en {periodo} queda en {total:g} %; debe llegar a 100 %. Falta asignar {100 - total:g} %.")
+        return data
     def save(self, commit=True):
         obj = super().save(commit=False)
         if obj.catalogo_id:
@@ -153,11 +191,18 @@ class AsignacionForm(BaseForm):
         if commit: obj.save()
         return obj
 
+ESTADOS_EVIDENCIA = [("Registrada", "Registrada (por validar)"), ("Pendiente", "Pendiente"), ("Aprobada", "Aprobada"), ("Rechazada", "Rechazada"), ("Anulada", "Anulada")]
+
+
 class EvidenciaForm(BaseForm):
     required_fields = ("autor_usuario",)
     class Meta:
         model = Evidencia
         fields = ["codigo", "actividad", "gestion_social", "tipo", "ruta", "autor_usuario", "fecha", "estado", "observacion", "verificador_usuario"]
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["estado"] = _choice_con_legado(self.fields["estado"], ESTADOS_EVIDENCIA, self.instance.estado if self.instance.pk else "")
+        self.fields["estado"].help_text = "Solo una evidencia Aprobada cuenta para el avance calculado; Rechazada o Anulada nunca cuentan (RN-009)."
     def save(self, commit=True):
         obj = super().save(commit=False)
         obj.autor = obj.autor_usuario.get_username() if obj.autor_usuario_id else ""
@@ -165,14 +210,38 @@ class EvidenciaForm(BaseForm):
         if commit: obj.save()
         return obj
 
+ESTADOS_PERIODO = [("Abierto", "Abierto"), ("Cerrado", "Cerrado")]
+
+
 class TrimestreForm(BaseForm):
     class Meta:
         model = Periodo
         fields = ["codigo", "nombre", "anio", "numero", "inicio", "termino", "estado"]
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._estaba_cerrado = bool(self.instance.pk) and periodo_cerrado(self.instance)
+        self.fields["estado"] = _choice_con_legado(self.fields["estado"], ESTADOS_PERIODO, self.instance.estado if self.instance.pk else "")
+        self.fields["estado"].help_text = "Un período Cerrado bloquea crear, editar o eliminar sus datos (RN-013). Solo Acceso total puede reabrirlo."
+    def clean(self):
+        data = super().clean()
+        if self._estaba_cerrado:
+            sigue_cerrado = normalizar(data.get("estado")).startswith("cerrad")
+            cambios = [n for n in self.changed_data if n != "estado"]
+            if sigue_cerrado and cambios:
+                raise forms.ValidationError("El período está cerrado: no se pueden modificar sus datos (RN-013). Para corregirlo, primero debe reabrirlo un usuario con Acceso total.")
+            if not sigue_cerrado:
+                if not es_acceso_total(self.usuario):
+                    self.add_error("estado", "Solo un usuario con Acceso total puede reabrir un período cerrado (RN-013).")
+                elif cambios:
+                    self.add_error("estado", "Al reabrir un período cambie solo el estado; edite los demás datos en un segundo paso.")
+        return data
     def save(self, commit=True):
         obj = super().save(commit=False)
         obj.dias_computables = (obj.termino - obj.inicio).days + 1
         if commit: obj.save()
+        if self._estaba_cerrado and not periodo_cerrado(obj):
+            logger.warning("Período %s reabierto por %s", obj.pk, getattr(self.usuario, "username", "?"))
+            self.advertencias.append(f"Período reabierto por {getattr(self.usuario, 'username', '?')}. La reapertura queda registrada en el log de auditoría del servidor.")
         return obj
 
 class GestionForm(BaseForm):
