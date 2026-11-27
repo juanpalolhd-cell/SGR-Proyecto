@@ -1,0 +1,25 @@
+SGR V4.2 - Kit de despliegue (incluye V4.1)
+===========================================
+Contenido
+  sgr_v42_deploy.tgz         codigo de la aplicacion (sin base de datos, venv ni secretos)
+  sgr_v42_deploy.tgz.sha256  verificacion de integridad
+  deploy_v42.sh              script de despliegue con respaldo previo y prueba de humo
+  sgr.env.correo.ejemplo     bloque de variables de correo con marcadores <...>
+
+Cuando el laboratorio de AWS Academy este encendido:
+  1. Copiar los archivos a /tmp de la instancia sgr-app (por ejemplo con scp desde este equipo).
+  2. (Opcional, para correo real) editar /etc/sgr/sgr.env en el servidor y agregar el bloque
+     de sgr.env.correo.ejemplo con los valores reales. Nunca pegar esos valores en un chat.
+  3. sudo bash /tmp/deploy_v42.sh /tmp/sgr_v42_deploy.tgz
+     o, para probar el correo: sudo TEST_EMAIL=su_correo@dominio bash /tmp/deploy_v42.sh /tmp/sgr_v42_deploy.tgz
+
+El script:
+  - respalda la app, /etc/sgr/sgr.env y la base (mysqldump) en /var/backups/sgr/*-pre-v42-<fecha>;
+  - agrega a sgr.env solo las variables V4.2 que falten (sin mostrar valores) e informa cuales de correo faltan;
+  - aplica migraciones (agenda 0004-0005, actividades 0006, organizacion 0005-0006), createcachetable,
+    setup_roles SIN crear usuarios, collectstatic; reinicia y hace la prueba de humo;
+  - no crea ni restablece cuentas y no cambia ninguna contrasena existente.
+
+Sin SMTP el sistema funciona igual: la recuperacion por correo aparece como "no disponible" y
+Acceso total entrega contrasenas temporales (se muestran una sola vez y vencen en 72 h).
+Importante: el sitio funciona por HTTP. Para uso real configure HTTPS antes de usar la recuperacion por correo.

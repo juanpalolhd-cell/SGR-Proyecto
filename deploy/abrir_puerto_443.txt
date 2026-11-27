@@ -1,0 +1,34 @@
+SGR - Abrir el puerto 443 (HTTPS) en el grupo de seguridad de la instancia sgr-app
+=================================================================================
+Instancia: i-0d263fa1c9623341e   IP elastica: 44.213.253.178   Region: us-east-1
+Solo se modifica el grupo de seguridad de ESA instancia. No toque otras instancias ni la otra IP elastica.
+El puerto 80 debe seguir abierto: Let's Encrypt valida por el 80 y el 80 redirige al 443.
+
+A) Consola de AWS (recomendado en AWS Academy)
+  1. Inicie el laboratorio (Start Lab) y abra la consola con "AWS".
+  2. EC2 > Instancias > seleccione sgr-app (i-0d263fa1c9623341e) > pestaña Seguridad.
+  3. Haga clic en el grupo de seguridad que aparece ahi (el que ya tiene la regla HTTP 80).
+  4. Editar reglas de entrada > Agregar regla:
+       Tipo: HTTPS   Protocolo: TCP   Puerto: 443   Origen: Anywhere-IPv4 (0.0.0.0/0)
+       Descripcion: HTTPS SGR
+  5. Guardar reglas.
+  Si AWS Academy no permite editar el grupo (error de permisos), pida al docente que agregue esa regla.
+
+B) AWS CLI (PowerShell en su PC, con las credenciales temporales de AWS Academy ya configuradas
+   en su perfil; no las pegue en ningun chat)
+  $SG = aws ec2 describe-instances --region us-east-1 --instance-ids i-0d263fa1c9623341e `
+        --query "Reservations[0].Instances[0].SecurityGroups[0].GroupId" --output text
+  aws ec2 describe-security-groups --region us-east-1 --group-ids $SG `
+        --query "SecurityGroups[0].IpPermissions[*].[FromPort,ToPort]" --output text   # debe incluir 80
+  aws ec2 authorize-security-group-ingress --region us-east-1 --group-id $SG `
+        --ip-permissions 'IpProtocol=tcp,FromPort=443,ToPort=443,IpRanges=[{CidrIp=0.0.0.0/0,Description="HTTPS SGR"}]'
+  (Si la instancia tiene mas de un grupo, use el que contiene la regla del puerto 80.
+   Si responde "InvalidPermission.Duplicate", la regla ya existia: no hay que hacer nada.)
+
+   Misma idea en bash:
+  SG=$(aws ec2 describe-instances --region us-east-1 --instance-ids i-0d263fa1c9623341e --query 'Reservations[0].Instances[0].SecurityGroups[0].GroupId' --output text)
+  aws ec2 authorize-security-group-ingress --region us-east-1 --group-id "$SG" --ip-permissions 'IpProtocol=tcp,FromPort=443,ToPort=443,IpRanges=[{CidrIp=0.0.0.0/0,Description="HTTPS SGR"}]'
+
+Comprobar desde su PC (despues de ejecutar activar_https.sh):
+  Test-NetConnection 44.213.253.178 -Port 443
+  curl.exe -I https://44-213-253-178.sslip.io/login/

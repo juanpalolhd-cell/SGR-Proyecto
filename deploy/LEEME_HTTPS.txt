@@ -1,0 +1,51 @@
+SGR - Kit para activar HTTPS (preparado el 26/11/2026; pendiente de activar)
+============================================================================
+Contenido
+  activar_https.sh           activa HTTPS en la instancia (idempotente, con respaldo y reversion)
+  desplegar_v42_y_https.sh   despliegue combinado: V4.2 y luego HTTPS
+  deploy_v42.sh              despliegue V4.2 (mismo de SGR_V42_despliegue)
+  sgr_v42_deploy.tgz(.sha256) codigo V4.2 + ajustes HTTPS (sin BD, venv ni secretos)
+  abrir_puerto_443.txt       como abrir el puerto 443 en el grupo de seguridad (consola o CLI)
+
+Orden (con el laboratorio de AWS Academy encendido)
+  1. Abrir el puerto 443 en el grupo de seguridad de sgr-app (ver abrir_puerto_443.txt).
+  2. Copiar esta carpeta a la instancia, por ejemplo desde PowerShell en el Escritorio:
+       scp -i <su_llave_labsuser.pem> -r SGR_HTTPS_despliegue ec2-user@44.213.253.178:/tmp/sgr_kit
+     (o conectarse por Session Manager / EC2 Instance Connect y subir los archivos a /tmp/sgr_kit)
+  3. En la instancia, UNA de estas dos opciones:
+     a) Combinado (recomendado):
+          sudo bash /tmp/sgr_kit/desplegar_v42_y_https.sh
+     b) Por separado:
+          sudo bash /tmp/sgr_kit/deploy_v42.sh /tmp/sgr_kit/sgr_v42_deploy.tgz
+          sudo bash /tmp/sgr_kit/activar_https.sh
+     Opcional: sudo LE_EMAIL=su_correo bash ... para recibir avisos de vencimiento de Let's Encrypt.
+     Otro nombre (dominio propio que ya apunte a 44.213.253.178): ... activar_https.sh sgr.midominio.cl
+  4. Debe terminar con "HTTPS ACTIVO (letsencrypt). URL: https://44-213-253-178.sslip.io/".
+     Si dice "(autofirmado)", Let's Encrypt fallo (puerto 80 cerrado desde Internet, DNS o limite
+     de emision): el sitio funciona por HTTPS pero el navegador mostrara una advertencia. Corrija la
+     causa y vuelva a ejecutar activar_https.sh (es seguro repetirlo).
+
+URL despues de activar:  https://44-213-253-178.sslip.io/
+  http://44.213.253.178/ y http://44-213-253-178.sslip.io/ redirigen a esa URL.
+  https://44.213.253.178/ (por IP) mostrara advertencia: el certificado es para el nombre, no para la IP.
+
+Que hace activar_https.sh
+  - Respalda /etc/nginx y /etc/sgr/sgr.env en /var/backups/sgr/https-pre-<fecha>/.
+  - Instala certbot (dnf; si no esta, pip en /opt/certbot).
+  - Pide el certificado de Let's Encrypt (webroot /var/www/letsencrypt) y, si falla, crea uno autofirmado.
+  - Crea /etc/nginx/conf.d/sgr_https.conf: 443 con TLS 1.2/1.3, redireccion 80 -> 443, HSTS max-age=3600
+    (solo con Let's Encrypt), X-Forwarded-Proto/For hacia gunicorn. El archivo anterior del SGR en
+    conf.d queda renombrado (*.desactivado-https-<fecha>), no se borra.
+  - Renovacion automatica: certbot-renew.timer o sgr-certbot-renew.timer (dos veces al dia) + recarga de nginx.
+  - En sgr.env (sin mostrar valores): agrega el nombre a DJANGO_ALLOWED_HOSTS y DJANGO_CSRF_TRUSTED_ORIGINS,
+    SGR_URL_PUBLICA=https://..., DJANGO_SECURE_COOKIES=True, DJANGO_SECURE_PROXY_SSL_HEADER=True,
+    SGR_PROXY_IP_HEADER=HTTP_X_FORWARDED_FOR.
+  - Reinicia nginx y el servicio sgr y hace la prueba de humo: https 200, redireccion 301, admin,
+    estaticos, cookie Secure, HSTS, POST con CSRF (usuario inexistente, nunca credenciales reales) y sin CSRF (403).
+
+Volver atras
+  sudo bash /var/backups/sgr/https-pre-<fecha>/revertir.sh
+  (use el respaldo de la PRIMERA ejecucion para volver al HTTP original; cada ejecucion crea el suyo)
+
+Cuando todo funcione unos dias, puede subir HSTS: sudo HSTS_SECONDS=31536000 bash activar_https.sh
+Aviso: sslip.io es un servicio DNS gratuito de terceros; para uso real conviene un dominio propio.
