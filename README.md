@@ -10,7 +10,7 @@ Actualización local: 8 de noviembre de 2026; despliegue en AWS: 13 de noviembre
 | Vicente Garrido | Diseño |
 | Bastian Tapia | Codigo |
 | Wilson Choque | Seguridad |
-
+| Christopher Galdames | Implementacion |
 Hubo asistencia de IA para análisis, implementación, migraciones, documentación y pruebas. La verificación automatizada se describe en Evidencias.pdf y evidencias.md; cada integrante debe revisar el código y explicar una operación CRUD, una validación y un permiso. No se atribuyen aportes humanos no confirmados.
 
 ## Inicio local seguro
