@@ -3,11 +3,19 @@
 {% block content %}
 <h2>Tablero de Delegaciones</h2>
 <a class="enlace-volver" href="{% url 'lista_metas' %}">&larr; Volver a metas</a>
+{% include "resultados/_selector_periodo.html" %}
+<p class="ayuda">Período: <strong>{{ periodo.nombre|default:"sin períodos" }}</strong> · meta esperada al día de hoy: <strong>{{ expected }}%</strong> (RN-007, fecha real) · umbral colectivo: <strong>{{ umbral }}%</strong> (RN-006).</p>
 
 {% for grupo in tablero %}
 <section class="detalle-caja">
     <h3>{{ grupo.unidad }}</h3>
     <p><em>{{ grupo.ambito }}</em></p>
+    <p>Cumplimiento colectivo:
+        {% if grupo.colectivo.promedio is None %}<span class="estado gris">Sin metas en el período</span>
+        {% elif grupo.colectivo.cumple %}<span class="estado verde">{{ grupo.colectivo.promedio }}% · cumple el umbral de {{ umbral }}%</span>
+        {% else %}<span class="estado rojo">{{ grupo.colectivo.promedio }}% · bajo el umbral de {{ umbral }}%</span>{% endif %}
+        <span class="ayuda">(promedio del total ponderado de {{ grupo.colectivo.n }} funcionario(s) con metas)</span>
+    </p>
     <table class="tabla">
         <thead>
             <tr>
@@ -16,6 +24,7 @@
                 <th>Total ponderado</th>
                 <th>Meta esperada</th>
                 <th>Semáforo</th>
+                <th>Suma ponderaciones</th>
                 <th>Ficha</th>
             </tr>
         </thead>
@@ -30,14 +39,15 @@
                     <span class="semaforo-punto {{ m.semaforo }}"></span>
                     <span class="estado {{ m.semaforo }}">{{ m.semaforo }}</span>
                 </td>
-                <td><a class="boton" href="{% url 'resultado_persona' m.persona_id %}">Ver</a></td>
+                <td>{% if not m.tiene_metas %}—{% elif m.suma_ok %}{{ m.suma_ponderaciones }}%{% else %}<span class="estado ambar" title="RN-001: debe sumar 100%">{{ m.suma_ponderaciones }}%</span>{% endif %}</td>
+                <td><a class="boton" href="{% url 'resultado_persona' m.persona_id %}{% if periodo %}?periodo={{ periodo.pk }}{% endif %}">Ver</a></td>
             </tr>
             {% empty %}
-            <tr><td colspan="6">Sin funcionarios.</td></tr>
+            <tr><td colspan="7">Sin funcionarios.</td></tr>
             {% endfor %}
         </tbody>
     </table>
 </section>
 {% endfor %}
-<p class="pendiente">Umbral colectivo de referencia: {{ umbral }}%</p>
+<p class="ayuda">El umbral colectivo ({{ umbral }}%) se configura en <code>data/resultados.json</code> → <code>umbral_colectivo</code>.</p>
 {% endblock %}

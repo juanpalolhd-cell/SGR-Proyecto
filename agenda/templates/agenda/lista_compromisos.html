@@ -1,19 +1,37 @@
 {% extends "base.html" %}
-{% block title %}Agenda de Compromisos{% endblock %}
+{% block title %}Tubo de trabajo{% endblock %}
 {% block content %}
 <div class="cabecera-lista">
-    <h2>Agenda Colectiva de Compromisos</h2>
+    <h2>Tubo de trabajo · Agenda colectiva de compromisos</h2>
     <div class="acciones-lista">
+        <a class="boton boton-secundario" href="{% url 'resumen_agenda' %}">Resumen</a>
         {% if perms.agenda.add_compromiso %}
         <a class="boton" href="{% url 'crear_compromiso' %}">Nuevo compromiso</a>
         {% endif %}
     </div>
 </div>
 <a class="enlace-volver" href="{% url 'home' %}">&larr; Volver al inicio</a>
+<p class="ayuda">Estados controlados: Ingresado → Pendiente / En proceso → Realizado. «Próximo a vencer» = vence dentro de {{ dias_aviso }} día(s) (parámetro <code>dias_aviso_vencimiento</code>).</p>
 <form class="filtro-lista" method="get">
-    <input type="search" name="q" value="{{ q }}" placeholder="Filtrar compromisos…">
+    <input type="search" name="q" value="{{ q }}" placeholder="Filtrar compromisos…" aria-label="Texto">
+    <select name="estado" aria-label="Estado">
+        <option value="">Todos los estados</option>
+        {% for valor, etiqueta in estados %}<option value="{{ valor }}"{% if valor == estado %} selected{% endif %}>{{ etiqueta }}</option>{% endfor %}
+    </select>
+    <select name="plazo" aria-label="Plazo">
+        <option value="">Todos los plazos</option>
+        {% for valor, etiqueta in filtros_plazo %}<option value="{{ valor }}"{% if valor == plazo %} selected{% endif %}>{{ etiqueta }}</option>{% endfor %}
+    </select>
+    <select name="responsable" aria-label="Responsable">
+        <option value="">Todos los responsables</option>
+        {% for p in responsables %}<option value="{{ p.pk }}"{% if p.pk|stringformat:'d' == responsable %} selected{% endif %}>{{ p.nombre }}</option>{% endfor %}
+    </select>
+    <select name="unidad" aria-label="Delegación">
+        <option value="">Todas las delegaciones</option>
+        {% for u in unidades %}<option value="{{ u.pk }}"{% if u.pk|stringformat:'d' == unidad %} selected{% endif %}>{{ u.nombre }}</option>{% endfor %}
+    </select>
     <button type="submit" class="btn-primario">Filtrar</button>
-    {% if q %}<a class="boton boton-secundario" href="{% url 'lista_compromisos' %}">Limpiar</a>{% endif %}
+    {% if hay_filtros %}<a class="boton boton-secundario" href="{% url 'lista_compromisos' %}">Limpiar</a>{% endif %}
 </form>
 <table class="tabla">
     <thead>
@@ -22,42 +40,38 @@
             <th>Solicitante</th>
             <th>Territorio</th>
             <th>Responsable</th>
+            <th>Delegación</th>
             <th>Fecha comprometida</th>
             <th>Estado</th>
+            <th>Plazo</th>
             <th>Acciones</th>
         </tr>
     </thead>
     <tbody>
-        {% for compromiso in compromisos %}
-        <tr>
-            <td>{{ compromiso.origen }}</td>
-            <td>{{ compromiso.solicitante }}</td>
-            <td>{{ compromiso.territorio }}</td>
-            <td>{{ compromiso.responsable.nombre }}</td>
-            <td>{{ compromiso.fecha_comprometida }}</td>
-            <td>
-                {% if compromiso.estado == "Realizado" %}
-                <span class="estado verde">{{ compromiso.estado }}</span>
-                {% elif compromiso.estado == "En proceso" %}
-                <span class="estado ambar">{{ compromiso.estado }}</span>
-                {% else %}
-                <span class="estado gris">{{ compromiso.estado }}</span>
-                {% endif %}
-            </td>
+        {% for c in compromisos %}
+        <tr class="{% if c.plazo == 'vencido' %}fila-vencida{% elif c.plazo == 'proximo' %}fila-proxima{% endif %}">
+            <td>{{ c.origen }}</td>
+            <td>{{ c.solicitante }}</td>
+            <td>{{ c.territorio }}</td>
+            <td>{{ c.responsable.nombre }}</td>
+            <td>{{ c.unidad.nombre }}</td>
+            <td>{{ c.fecha_comprometida|date:"d-m-Y" }}</td>
+            <td>{% include "agenda/_estado.html" %}</td>
+            <td>{% include "agenda/_plazo.html" %}</td>
             <td class="celdas-acciones">
-                <a class="boton" href="{% url 'detalle_compromiso' compromiso.id %}">Ver</a>
+                <a class="boton" href="{% url 'detalle_compromiso' c.id %}">Ver</a>
                 {% if perms.agenda.change_compromiso %}
-                <a class="boton boton-secundario" href="{% url 'editar_compromiso' compromiso.id %}">Editar</a>
+                <a class="boton boton-secundario" href="{% url 'editar_compromiso' c.id %}">Editar</a>
                 {% endif %}
                 {% if perms.agenda.delete_compromiso %}
-                <a class="boton boton-peligro" href="{% url 'borrar_compromiso' compromiso.id %}">Borrar</a>
+                <a class="boton boton-peligro" href="{% url 'borrar_compromiso' c.id %}">Borrar</a>
                 {% endif %}
             </td>
         </tr>
         {% empty %}
-        <tr><td colspan="7">No hay compromisos registrados.</td></tr>
+        <tr><td colspan="9">No hay compromisos que coincidan.</td></tr>
         {% endfor %}
     </tbody>
 </table>
-<p><a class="boton" href="{% url 'resumen_agenda' %}">Ver resumen de agenda</a></p>
+<p><a class="boton" href="{% url 'resumen_agenda' %}">Ver resumen por responsable y delegación</a></p>
 {% endblock %}

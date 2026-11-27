@@ -2,6 +2,7 @@ from django.db import models
 from django.core.validators import MinValueValidator, MaxValueValidator
 from decimal import Decimal
 from sgr.domain import DomainMixin
+from sgr.reglas import validar_periodo_abierto
 from django.utils import timezone
 
 from organizacion.models import Persona
@@ -48,6 +49,10 @@ class Meta(DomainMixin, models.Model):
 
     def __str__(self):
         return f"{self.item} ({self.persona})"
+
+    def clean(self):
+        super().clean()
+        validar_periodo_abierto(self)
 
 
 class CatalogoMeta(DomainMixin, models.Model):

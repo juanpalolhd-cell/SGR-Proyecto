@@ -2,6 +2,7 @@
 {% block title %}Meta {{ meta.id }}{% endblock %}
 {% block content %}
 <a class="enlace-volver" href="{% url 'lista_metas' %}">&larr; Volver a metas</a>
+{% if periodo_cerrado %}<p class="aviso aviso-rojo">El período {{ periodo.nombre }} está cerrado: esta meta no se puede editar ni eliminar (RN-013).</p>{% endif %}
 <div class="detalle-caja">
     <div class="cabecera-lista">
         <h2>Meta de {{ persona_nombre }}</h2>
@@ -23,8 +24,10 @@
         <dd>{{ periodo.nombre }} ({{ periodo.inicio }} al {{ periodo.termino }})</dd>
         <dt>Meta objetivo</dt>
         <dd>{{ meta.meta }}</dd>
-        <dt>Avance</dt>
-        <dd>{{ meta.avance }}</dd>
+        <dt>Avance manual</dt>
+        <dd>{{ meta.avance }}{% if not usa_calculado %} (usado en el cálculo){% endif %}</dd>
+        <dt>Avance calculado (RN-003/RN-009)</dt>
+        <dd>{{ avance_calculado }}{% if usa_calculado %} (usado en el cálculo){% endif %} · {{ avance_detalle.actividades }} actividad(es) válidas, {{ avance_detalle.gestiones }} gestión(es) atendidas{% if avance_detalle.exige_evidencia %}; exige evidencia aprobada ({{ avance_detalle.sin_evidencia }} registro(s) sin evidencia aprobada no cuentan){% endif %}</dd>
         <dt>Ponderador</dt>
         <dd>{{ meta.ponderador }}%</dd>
         <dt>% Cumplimiento</dt>

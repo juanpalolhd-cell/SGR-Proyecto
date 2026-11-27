@@ -1,46 +1,54 @@
 {% extends "base.html" %}
-{% block title %}{{ compromiso.origen }}{% endblock %}
+{% block title %}Compromiso {{ compromiso.id }}{% endblock %}
 {% block content %}
-<a class="enlace-volver" href="{% url 'lista_compromisos' %}">&larr; Volver a la agenda</a>
+<a class="enlace-volver" href="{% url 'lista_compromisos' %}">&larr; Volver al tubo de trabajo</a>
+{% with c=compromiso %}
+{% if c.plazo == "vencido" %}<p class="aviso aviso-rojo">Compromiso vencido: la fecha comprometida ya pasó y no está realizado. Registre una observación o reprograme la fecha indicando el motivo.</p>
+{% elif c.plazo == "proximo" %}<p class="aviso aviso-ambar">Próximo a vencer: quedan {{ c.dias_restantes }} día(s) (umbral {{ dias_aviso }} días).</p>
+{% elif c.plazo == "fuera_plazo" %}<p class="aviso aviso-ambar">Realizado después de la fecha comprometida.</p>{% endif %}
 <div class="detalle-caja">
     <div class="cabecera-lista">
-        <h2>Compromiso {{ compromiso.id }}</h2>
+        <h2>Compromiso {{ c.id }}</h2>
         <div class="acciones-lista">
             {% if perms.agenda.change_compromiso %}
-            <a class="boton boton-secundario" href="{% url 'editar_compromiso' compromiso.id %}">Editar</a>
+            <a class="boton boton-secundario" href="{% url 'editar_compromiso' c.id %}">Editar / cambiar estado</a>
             {% endif %}
             {% if perms.agenda.delete_compromiso %}
-            <a class="boton boton-peligro" href="{% url 'borrar_compromiso' compromiso.id %}">Borrar</a>
+            <a class="boton boton-peligro" href="{% url 'borrar_compromiso' c.id %}">Borrar</a>
             {% endif %}
         </div>
     </div>
     <dl>
-        <dt>Origen</dt>
-        <dd>{{ compromiso.origen }}</dd>
-        <dt>Solicitante</dt>
-        <dd>{{ compromiso.solicitante }}</dd>
-        <dt>Territorio</dt>
-        <dd>{{ compromiso.territorio }}</dd>
-        <dt>Responsable</dt>
-        <dd>{{ compromiso.responsable.nombre }}</dd>
-        <dt>Delegación</dt>
-        <dd>{{ compromiso.unidad.nombre }}</dd>
-        <dt>Área de apoyo</dt>
-        <dd>{{ compromiso.area_apoyo }}</dd>
-        <dt>Fecha comprometida</dt>
-        <dd>{{ compromiso.fecha_comprometida }}</dd>
-        <dt>Estado</dt>
-        <dd>
-            {% if compromiso.estado == "Realizado" %}
-            <span class="estado verde">{{ compromiso.estado }}</span>
-            {% elif compromiso.estado == "En proceso" %}
-            <span class="estado ambar">{{ compromiso.estado }}</span>
-            {% else %}
-            <span class="estado gris">{{ compromiso.estado }}</span>
-            {% endif %}
-        </dd>
-        <dt>Observaciones</dt>
-        <dd>{{ compromiso.observaciones }}</dd>
+        <dt>Origen</dt><dd>{{ c.origen }}</dd>
+        <dt>Solicitante</dt><dd>{{ c.solicitante }}</dd>
+        <dt>Territorio</dt><dd>{{ c.territorio }}</dd>
+        <dt>Responsable</dt><dd>{{ c.responsable.nombre }}</dd>
+        <dt>Delegación</dt><dd>{{ c.unidad.nombre }}</dd>
+        <dt>Área de apoyo</dt><dd>{{ c.area_apoyo }}</dd>
+        <dt>Fecha comprometida</dt><dd>{{ c.fecha_comprometida|date:"d-m-Y" }}</dd>
+        <dt>Estado</dt><dd>{% include "agenda/_estado.html" %}</dd>
+        <dt>Plazo</dt><dd>{% include "agenda/_plazo.html" %}</dd>
+        <dt>Observaciones</dt><dd>{{ c.observaciones|linebreaksbr }}</dd>
     </dl>
 </div>
+{% endwith %}
+{% if puede_ver_historial %}
+<h3>Historial de estados</h3>
+<table class="tabla">
+    <thead><tr><th>Fecha</th><th>Usuario</th><th>De</th><th>A</th><th>Observación</th></tr></thead>
+    <tbody>
+        {% for h in historial %}
+        <tr>
+            <td>{{ h.fecha|date:"d-m-Y H:i" }}</td>
+            <td>{% if h.usuario %}{{ h.usuario.get_username }}{% else %}Sistema{% endif %}</td>
+            <td>{{ h.estado_anterior|default:"—" }}</td>
+            <td>{{ h.estado_nuevo }}</td>
+            <td>{{ h.observacion }}</td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="5">Sin cambios registrados (compromiso anterior a la incorporación del historial).</td></tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endif %}
 {% endblock %}

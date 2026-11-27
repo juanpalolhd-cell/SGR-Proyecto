@@ -151,6 +151,8 @@
     "tope_ponderado": 150,
     "umbral_colectivo": 80,
     "maximo_cumplimiento": 100,
-    "regla_semaforo_ambar": 60
+    "regla_semaforo_ambar": 60,
+    "dias_aviso_vencimiento": 7,
+    "fuente_avance": "manual"
   }
 }

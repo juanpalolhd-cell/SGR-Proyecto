@@ -1,47 +1,40 @@
 {% extends "base.html" %}
-{% block title %}Resumen de Agenda{% endblock %}
+{% block title %}Resumen del tubo de trabajo{% endblock %}
 {% block content %}
-<h2>Resumen de Agenda Colectiva</h2>
-<a class="enlace-volver" href="{% url 'lista_compromisos' %}">&larr; Volver a la agenda</a>
+<h2>Resumen del tubo de trabajo</h2>
+<a class="enlace-volver" href="{% url 'lista_compromisos' %}">&larr; Volver al tubo de trabajo</a>
+<form class="filtro-lista" method="get">
+    <label>Fecha comprometida desde <input type="date" name="desde" value="{{ desde }}"></label>
+    <label>hasta <input type="date" name="hasta" value="{{ hasta }}"></label>
+    <button type="submit" class="btn-primario">Aplicar</button>
+    {% if desde or hasta %}<a class="boton boton-secundario" href="{% url 'resumen_agenda' %}">Limpiar</a>{% endif %}
+</form>
 
 <section class="resumen">
-    <div class="resumen-item">
-        <div class="numero">{{ resumen.total }}</div>
-        <div>Total de compromisos</div>
-    </div>
-    <div class="resumen-item">
-        <div class="numero">{{ resumen.realizado }}</div>
-        <div>Realizados ({{ resumen.por_realizado }}%)</div>
-    </div>
-    <div class="resumen-item">
-        <div class="numero">{{ resumen.pendiente }}</div>
-        <div>Pendientes ({{ resumen.por_pendiente }}%)</div>
-    </div>
+    <div class="resumen-item"><div class="numero">{{ resumen.total }}</div><div>Total de compromisos</div></div>
+    <div class="resumen-item"><div class="numero">{{ resumen.realizado }}</div><div>Realizados ({{ resumen.por_realizado }}%)</div></div>
+    <div class="resumen-item"><div class="numero">{{ resumen.pendiente }}</div><div>Pendientes ({{ resumen.por_pendiente }}%)</div></div>
+    <div class="resumen-item"><div class="numero rojo-texto">{{ resumen.vencidos }}</div><div><a href="{% url 'lista_compromisos' %}?plazo=vencido">Vencidos</a></div></div>
+    <div class="resumen-item"><div class="numero">{{ resumen.proximos }}</div><div><a href="{% url 'lista_compromisos' %}?plazo=proximo">Próximos a vencer ({{ dias_aviso }} d)</a></div></div>
+    <div class="resumen-item"><div class="numero">{{ resumen.fuera_plazo }}</div><div>Realizados fuera de plazo</div></div>
 </section>
 
 <h3>Compromisos por estado</h3>
 <table class="tabla">
-    <thead>
-        <tr>
-            <th>Estado</th>
-            <th>Cantidad</th>
-        </tr>
-    </thead>
+    <thead><tr><th>Estado</th><th>Cantidad</th></tr></thead>
     <tbody>
         {% for estado, cantidad in resumen.totales.items %}
-        <tr>
-            <td>{{ estado }}</td>
-            <td>{{ cantidad }}</td>
-        </tr>
+        <tr><td>{{ estado }}</td><td>{{ cantidad }}</td></tr>
         {% endfor %}
     </tbody>
 </table>
 
+<h3>Por responsable (funcionario)</h3>
+{% include "agenda/_tabla_resumen.html" with filas=por_responsable etiqueta="Responsable" %}
+<h3>Por delegación</h3>
+{% include "agenda/_tabla_resumen.html" with filas=por_delegacion etiqueta="Delegación" %}
+
 <p class="pendiente">
-    {% if resumen.pendiente > 0 %}
-    Hay compromisos pendientes que requieren seguimiento.
-    {% else %}
-    Todos los compromisos están resueltos.
-    {% endif %}
+    {% if resumen.vencidos > 0 %}Hay {{ resumen.vencidos }} compromiso(s) vencido(s) sin cierre.{% elif resumen.pendiente > 0 %}Hay compromisos pendientes que requieren seguimiento.{% else %}Todos los compromisos están resueltos.{% endif %}
 </p>
 {% endblock %}

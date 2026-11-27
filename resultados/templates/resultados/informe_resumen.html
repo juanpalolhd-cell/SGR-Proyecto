@@ -3,11 +3,16 @@
 {% block content %}
 <h2>Informe Resumen de Gestión</h2>
 <a class="enlace-volver" href="{% url 'lista_metas' %}">&larr; Volver a metas</a>
+{% include "resultados/_selector_periodo.html" %}
 
 <section class="resumen">
     <div class="resumen-item">
         <div class="numero">{{ promedio }}%</div>
         <div>Promedio ponderado</div>
+    </div>
+    <div class="resumen-item">
+        <div class="numero{% if colectivo.cumple is False %} rojo-texto{% endif %}">{% if colectivo.promedio is None %}—{% else %}{{ colectivo.promedio }}%{% endif %}</div>
+        <div>Cumplimiento colectivo vs umbral {{ umbral }}%: {% if colectivo.promedio is None %}sin metas{% elif colectivo.cumple %}<span class="estado verde">cumple</span>{% else %}<span class="estado rojo">bajo el umbral</span>{% endif %}</div>
     </div>
     <div class="resumen-item">
         <div class="numero">{{ semaforos.verde }}</div>
@@ -52,5 +57,14 @@
         {% endfor %}
     </tbody>
 </table>
-<p>Resultado ponderado tope: {{ tope }}% · Umbral colectivo de referencia: {{ umbral }}%</p>
+<h3>Cumplimiento colectivo por delegación (RN-006)</h3>
+<table class="tabla">
+    <thead><tr><th>Delegación</th><th>Funcionarios con metas</th><th>Promedio ponderado</th><th>Umbral {{ umbral }}%</th></tr></thead>
+    <tbody>
+        {% for d in delegaciones %}
+        <tr><td>{{ d.nombre }}</td><td>{{ d.n }}</td><td>{% if d.promedio is None %}—{% else %}{{ d.promedio }}%{% endif %}</td><td>{% if d.promedio is None %}<span class="estado gris">sin metas</span>{% elif d.cumple %}<span class="estado verde">cumple</span>{% else %}<span class="estado rojo">bajo el umbral</span>{% endif %}</td></tr>
+        {% empty %}<tr><td colspan="4">Sin datos.</td></tr>{% endfor %}
+    </tbody>
+</table>
+<p>Período: {{ periodo.nombre|default:"—" }} · Resultado ponderado tope: {{ tope }}% · Umbral colectivo: {{ umbral }}% (configurable en <code>data/resultados.json</code>).</p>
 {% endblock %}

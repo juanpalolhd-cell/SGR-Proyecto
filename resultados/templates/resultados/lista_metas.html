@@ -25,7 +25,8 @@
             <th>Ítem</th>
             <th>Período</th>
             <th>Meta</th>
-            <th>Avance</th>
+            <th>Avance manual</th>
+            <th>Avance calculado</th>
             <th>% Cumplimiento</th>
             <th>Ponderado</th>
             <th>Acciones</th>
@@ -38,7 +39,8 @@
             <td>{{ meta.item }}</td>
             <td>{{ meta.periodo_nombre }}</td>
             <td>{{ meta.meta }}</td>
-            <td>{{ meta.avance }}</td>
+            <td>{{ meta.avance }}{% if not meta.usa_calculado %} ✔{% endif %}</td>
+            <td>{% if meta.difiere %}<strong>{{ meta.avance_calculado }}</strong>{% else %}{{ meta.avance_calculado }}{% endif %}{% if meta.usa_calculado %} ✔{% endif %}</td>
             <td>{{ meta.pct_cumplimiento }}%</td>
             <td>{{ meta.ponderado }}</td>
             <td class="celdas-acciones">
@@ -52,10 +54,11 @@
             </td>
         </tr>
         {% empty %}
-        <tr><td colspan="8">No hay metas registradas.</td></tr>
+        <tr><td colspan="9">No hay metas registradas.</td></tr>
         {% endfor %}
     </tbody>
 </table>
+<p class="ayuda">✔ = avance usado en el indicador (parámetro <code>fuente_avance</code> = «{{ fuente_avance }}» en <code>data/resultados.json</code>). En negrita: el avance calculado desde actividades y evidencias aprobadas difiere del manual.</p>
 <div class="acciones">
     <a class="boton" href="{% url 'tablero_unidad' %}">Ver tablero de delegaciones</a>
     <a class="boton" href="{% url 'informe_resumen' %}">Ver informe resumen</a>

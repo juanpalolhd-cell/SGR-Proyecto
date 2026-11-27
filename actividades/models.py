@@ -2,6 +2,7 @@ from django.db import models
 from django.core.exceptions import ValidationError
 from django.core.validators import MinValueValidator, MaxValueValidator
 from sgr.domain import DomainMixin
+from sgr.reglas import validar_periodo_abierto, validar_telefono
 
 from organizacion.models import Persona, Unidad
 
@@ -31,13 +32,14 @@ class Actividad(DomainMixin, models.Model):
         if self.solicitante_id and self.territorio_id and self.solicitante.territorio_id != self.territorio_id:
             errors["solicitante"] = "El solicitante debe corresponder al territorio seleccionado."
         if errors: raise ValidationError(errors)
+        validar_periodo_abierto(self)
 
     codigo = models.CharField(max_length=50, unique=True)
     fecha = models.DateField()
     descripcion = models.TextField()
     accion = models.CharField(max_length=200)
     contacto = models.CharField(max_length=120)
-    telefono = models.CharField(max_length=80, blank=True)
+    telefono = models.CharField(max_length=80, blank=True, validators=[validar_telefono])
     persona = models.ForeignKey(Persona, on_delete=models.PROTECT, related_name="actividades")
     unidad = models.ForeignKey(Unidad, on_delete=models.PROTECT, related_name="actividades")
     item = models.CharField(max_length=120)
@@ -63,6 +65,7 @@ class Evidencia(DomainMixin, models.Model):
         super().clean()
         if bool(self.actividad_id) == bool(self.gestion_social_id):
             raise ValidationError("Seleccione exactamente un origen: actividad o gestión social.")
+        validar_periodo_abierto(self)
 
     codigo = models.CharField(max_length=50, unique=True)
     actividad = models.ForeignKey("Actividad", null=True, blank=True, on_delete=models.PROTECT, related_name="evidencias")
@@ -97,8 +100,19 @@ class GestionSocial(DomainMixin, models.Model):
     beneficio = models.CharField(max_length=200, blank=True)
     resultado = models.TextField(blank=True)
     estado = models.CharField(max_length=20, choices=[("pendiente", "Pendiente"), ("atendida", "Atendida"), ("anulada", "Anulada")], default="pendiente")
+    MAX_GESTIONES_POR_PERSONA = 3
     def __str__(self): return f"Gestión {self.pk or 'nueva'} — {self.beneficiario}"
     def clean(self):
         super().clean()
         if self.subtipo_id and self.tipo_id and self.subtipo.tipo_atencion_id != self.tipo_id:
             raise ValidationError({"subtipo": "El subtipo no pertenece al tipo seleccionado."})
+        # RN-012: hasta tres gestiones (no anuladas) por persona usuaria.
+        if self.beneficiario_id and self.estado != "anulada":
+            otras = GestionSocial.objects.filter(beneficiario_id=self.beneficiario_id).exclude(estado="anulada")
+            if self.pk:
+                otras = otras.exclude(pk=self.pk)
+            original = GestionSocial.objects.filter(pk=self.pk).values("beneficiario_id", "estado").first() if self.pk else None
+            suma_nueva = original is None or original["beneficiario_id"] != self.beneficiario_id or original["estado"] == "anulada"
+            if suma_nueva and otras.count() >= self.MAX_GESTIONES_POR_PERSONA:
+                raise ValidationError({"beneficiario": f"Esta persona ya tiene {otras.count()} gestiones activas; el máximo es {self.MAX_GESTIONES_POR_PERSONA} (RN-012). Anule o complete una gestión existente."})
+        validar_periodo_abierto(self)

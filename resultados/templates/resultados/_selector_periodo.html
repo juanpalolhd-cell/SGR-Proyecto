@@ -1,0 +1,8 @@
+<form class="filtro-lista" method="get">
+    <label>Período
+        <select name="periodo" onchange="this.form.submit()">
+            {% for p in periodos %}<option value="{{ p.pk }}"{% if periodo and p.pk == periodo.pk %} selected{% endif %}>{{ p.nombre }} ({{ p.inicio|date:"d-m-Y" }} al {{ p.termino|date:"d-m-Y" }}){% if p.estado|lower == "cerrado" %} · cerrado{% endif %}</option>{% endfor %}
+        </select>
+    </label>
+    <noscript><button type="submit" class="btn-primario">Ver</button></noscript>
+</form>

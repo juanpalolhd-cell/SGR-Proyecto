@@ -8,29 +8,23 @@ from django.urls import reverse_lazy
 from django.views.generic import CreateView, DeleteView, UpdateView
 
 from organizacion.models import Persona, Unidad
-from sgr.utils import load_json
+from sgr.parametros import parametros as _parametros
+from sgr.reglas import periodo_cerrado
 
+from .calculos import avance_calculado, meta_esperada, periodo_vigente
 from .forms import MetaForm, PeriodoForm
 from .models import Meta, Periodo
 
-DIAS_TRANSCURRIDOS = 15
+
+def _avance_usado(meta, params):
+    """Avance que entra al indicador: manual (por defecto, conserva los datos históricos) o calculado (RN-003/RN-009)."""
+    calculado, detalle = avance_calculado(meta)
+    usar_calculado = str(params.get("fuente_avance", "manual")).lower() == "calculado"
+    return (calculado if usar_calculado else float(meta.avance)), calculado, detalle, usar_calculado
 
 
-def _parametros():
-    try:
-        data = load_json("resultados.json")
-        return data.get("parametros", {})
-    except Exception:
-        return {
-            "tope_ponderado": 150,
-            "umbral_colectivo": 80,
-            "maximo_cumplimiento": 100,
-            "regla_semaforo_ambar": 60,
-        }
-
-
-def _calcular_meta(meta, tope, max_c):
-    avance = float(meta.avance)
+def _calcular_meta(meta, tope, max_c, avance=None):
+    avance = float(meta.avance) if avance is None else float(avance)
     objetivo = float(meta.meta)
     pct = round((avance / objetivo * 100), 1) if objetivo > 0 else 0.0
     pct_cap = min(pct, max_c)
@@ -42,9 +36,20 @@ def _calcular_meta(meta, tope, max_c):
     }
 
 
-def _expected(periodo):
-    dias = periodo.dias_computables
-    return round((DIAS_TRANSCURRIDOS / dias * 100), 1) if dias else 0.0
+def _expected(periodo, hoy=None):
+    return meta_esperada(periodo, hoy)
+
+
+def _elegir_periodo(request, por_defecto):
+    """?periodo=<id>; si no, el período vigente hoy; si no hay, el criterio anterior de cada vista."""
+    periodos = list(Periodo.objects.order_by("-inicio"))
+    valor = request.GET.get("periodo", "")
+    if valor.isdigit():
+        elegido = next((p for p in periodos if p.pk == int(valor)), None)
+        if elegido is None:
+            raise Http404("Período inexistente")
+        return elegido, periodos
+    return periodo_vigente(periodos) or por_defecto, periodos
 
 
 def _semaforo(total, expected, umbral_ambar):
@@ -58,7 +63,8 @@ def _semaforo(total, expected, umbral_ambar):
 def _enriquecer_meta(meta, params):
     tope = params.get("tope_ponderado", 150)
     max_c = params.get("maximo_cumplimiento", 100)
-    calc = _calcular_meta(meta, tope, max_c)
+    usado, calculado, detalle, usa_calculado = _avance_usado(meta, params)
+    calc = _calcular_meta(meta, tope, max_c, usado)
     return {
         "id": meta.id,
         "item": meta.item,
@@ -69,6 +75,10 @@ def _enriquecer_meta(meta, params):
         "periodo_nombre": meta.periodo.nombre,
         "meta": meta.meta,
         "avance": meta.avance,
+        "avance_calculado": calculado,
+        "avance_detalle": detalle,
+        "usa_calculado": usa_calculado,
+        "difiere": float(meta.avance) != float(calculado),
         "ponderador": meta.ponderador,
         "pct_cumplimiento": calc["pct_cumplimiento"],
         "ponderado": calc["ponderado"],
@@ -81,12 +91,13 @@ def _resumen_persona(persona, periodo, params):
     max_c = params.get("maximo_cumplimiento", 100)
     umbral = params.get("regla_semaforo_ambar", 60)
     metas_qs = Meta.objects.filter(persona=persona, periodo=periodo).select_related(
-        "persona", "periodo"
+        "persona", "periodo", "catalogo"
     )
     metas = [_enriquecer_meta(m, params) for m in metas_qs]
     total = round(sum(m["ponderado"] for m in metas), 1)
     total = min(total, tope)
     expected = _expected(periodo) if periodo else 0
+    suma_ponderaciones = round(sum(float(m["ponderador"]) for m in metas if m["obj"].estado), 2)
     return {
         "persona": persona,
         "persona_id": persona.id,
@@ -98,6 +109,9 @@ def _resumen_persona(persona, periodo, params):
         "total_ponderado": total,
         "expected": expected,
         "semaforo": _semaforo(total, expected, umbral),
+        "suma_ponderaciones": suma_ponderaciones,
+        "suma_ok": not metas or suma_ponderaciones == 100,
+        "tiene_metas": bool(metas),
     }
 
 
@@ -105,7 +119,7 @@ def _resumen_persona(persona, periodo, params):
 def lista_metas(request):
     q = (request.GET.get("q") or "").strip()
     params = _parametros()
-    qs = Meta.objects.select_related("persona", "periodo")
+    qs = Meta.objects.select_related("persona", "periodo", "catalogo")
     if q:
         qs = qs.filter(
             Q(item__icontains=q)
@@ -118,18 +132,23 @@ def lista_metas(request):
     return render(
         request,
         "resultados/lista_metas.html",
-        {"metas": metas, "periodos": periodos, "q": q},
+        {"metas": metas, "periodos": periodos, "q": q, "fuente_avance": params.get("fuente_avance", "manual")},
     )
 
 
 @permission_required("resultados.view_meta", raise_exception=True)
 def detalle_meta(request, meta_id):
     params = _parametros()
-    meta = get_object_or_404(Meta.objects.select_related("persona", "periodo"), pk=meta_id)
+    meta = get_object_or_404(Meta.objects.select_related("persona", "periodo", "catalogo"), pk=meta_id)
     tope = params.get("tope_ponderado", 150)
     max_c = params.get("maximo_cumplimiento", 100)
-    calc = _calcular_meta(meta, tope, max_c)
+    usado, calculado, detalle, usa_calculado = _avance_usado(meta, params)
+    calc = _calcular_meta(meta, tope, max_c, usado)
     contexto = {
+        "avance_calculado": calculado,
+        "avance_detalle": detalle,
+        "usa_calculado": usa_calculado,
+        "periodo_cerrado": periodo_cerrado(meta.periodo),
         "meta": meta,
         "persona_nombre": meta.persona.nombre,
         "periodo": meta.periodo,
@@ -147,22 +166,23 @@ def resultado_persona(request, persona_id):
     persona = get_object_or_404(
         Persona.objects.select_related("cargo", "delegacion"), pk=persona_id
     )
-    periodos = list(Periodo.objects.all())
-    periodo = periodos[0] if periodos else None
+    anterior = Periodo.objects.order_by("-inicio").first()
+    periodo, periodos = _elegir_periodo(request, anterior)
     if periodo is None:
         raise Http404("No hay períodos registrados")
     resumen = _resumen_persona(persona, periodo, params)
     return render(
         request,
         "resultados/resultado_persona.html",
-        {"resumen": resumen, "periodos": periodos},
+        {"resumen": resumen, "periodos": periodos, "periodo": periodo, "fuente_avance": params.get("fuente_avance", "manual")},
     )
 
 
 @permission_required("resultados.view_meta", raise_exception=True)
 def tablero_unidad(request):
     params = _parametros()
-    periodo = Periodo.objects.order_by("id").first()
+    periodo, periodos = _elegir_periodo(request, Periodo.objects.order_by("id").first())
+    umbral = float(params.get("umbral_colectivo", 80))
     tablero = []
     for unidad in Unidad.objects.all():
         miembros = Persona.objects.filter(delegacion=unidad).select_related(
@@ -181,22 +201,35 @@ def tablero_unidad(request):
                     "total_ponderado": r["total_ponderado"],
                     "expected": r["expected"],
                     "semaforo": r["semaforo"],
+                    "suma_ponderaciones": r["suma_ponderaciones"],
+                    "suma_ok": r["suma_ok"],
+                    "tiene_metas": r["tiene_metas"],
                 }
             )
         tablero.append(
-            {"unidad": unidad.nombre, "ambito": unidad.ambito, "miembros": filas}
+            {"unidad": unidad.nombre, "ambito": unidad.ambito, "miembros": filas, "colectivo": _colectivo(filas, umbral)}
         )
     return render(
         request,
         "resultados/tablero_unidad.html",
-        {"tablero": tablero, "umbral": params.get("umbral_colectivo", 80)},
+        {"tablero": tablero, "umbral": umbral, "periodo": periodo, "periodos": periodos, "expected": _expected(periodo) if periodo else 0},
     )
+
+
+def _colectivo(filas, umbral):
+    """RN-006: cumplimiento colectivo = promedio del total ponderado de quienes tienen metas en el período, comparado con el umbral."""
+    con_metas = [f for f in filas if f.get("tiene_metas")]
+    if not con_metas:
+        return {"promedio": None, "cumple": None, "n": 0}
+    promedio = round(sum(f["total_ponderado"] for f in con_metas) / len(con_metas), 1)
+    return {"promedio": promedio, "cumple": promedio >= umbral, "n": len(con_metas)}
 
 
 @permission_required("resultados.view_meta", raise_exception=True)
 def informe_resumen(request):
     params = _parametros()
-    periodo = Periodo.objects.order_by("id").first()
+    periodo, periodos = _elegir_periodo(request, Periodo.objects.order_by("id").first())
+    umbral = float(params.get("umbral_colectivo", 80))
     informes = []
     for p in Persona.objects.select_related("cargo", "delegacion"):
         if periodo is None:
@@ -210,8 +243,14 @@ def informe_resumen(request):
                 "cargo": r["cargo"],
                 "total_ponderado": r["total_ponderado"],
                 "semaforo": r["semaforo"],
+                "tiene_metas": r["tiene_metas"],
             }
         )
+    por_delegacion = {}
+    for i in informes:
+        por_delegacion.setdefault(i["delegacion"], []).append(i)
+    delegaciones = [{"nombre": nombre, **_colectivo(filas, umbral)} for nombre, filas in sorted(por_delegacion.items())]
+    colectivo = _colectivo(informes, umbral)
     semaforos = {
         "verde": sum(1 for i in informes if i["semaforo"] == "verde"),
         "ambar": sum(1 for i in informes if i["semaforo"] == "ambar"),
@@ -229,8 +268,12 @@ def informe_resumen(request):
             "informes": informes,
             "semaforos": semaforos,
             "promedio": prom,
-            "umbral": params.get("umbral_colectivo", 80),
+            "umbral": umbral,
             "tope": params.get("tope_ponderado", 150),
+            "colectivo": colectivo,
+            "delegaciones": delegaciones,
+            "periodo": periodo,
+            "periodos": periodos,
         },
     )
 

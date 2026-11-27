@@ -2,6 +2,7 @@ from django.contrib.auth.models import User
 from django.db import models
 from django.core.exceptions import ValidationError
 from sgr.domain import DomainMixin
+from sgr.reglas import validar_telefono
 
 
 class Unidad(DomainMixin, models.Model):
@@ -170,7 +171,7 @@ class Vecino(DomainMixin, models.Model):
     rut = models.CharField("RUT ficticio", max_length=20, unique=True)
     nombres = models.CharField(max_length=150)
     apellidos = models.CharField(max_length=150)
-    telefono = models.CharField(max_length=30)
+    telefono = models.CharField(max_length=30, validators=[validar_telefono])
     correo = models.EmailField()
     direccion = models.CharField(max_length=250)
     territorio = models.ForeignKey(Territorio, on_delete=models.PROTECT, related_name="vecinos")
@@ -205,3 +206,28 @@ class Participacion(DomainMixin, models.Model):
             raise ValidationError({"junta": "La junta debe pertenecer al territorio del vecino."})
         if self.dirigente and not self.cargo:
             raise ValidationError({"cargo": "Indique el cargo de dirigente."})
+
+
+class EstadoClave(models.Model):
+    """Estado de la contraseña de una cuenta (V4.2): cambio obligatorio y vencimiento de la clave temporal.
+
+    No guarda contraseñas: solo banderas y fechas. Las cuentas sin registro no tienen restricciones.
+    """
+    MOTIVOS = [("temporal", "Contraseña temporal generada"), ("restablecida", "Contraseña establecida por Acceso total")]
+    usuario = models.OneToOneField(User, on_delete=models.CASCADE, related_name="estado_clave")
+    debe_cambiar_clave = models.BooleanField(default=False)
+    marcado_en = models.DateTimeField(null=True, blank=True)
+    motivo = models.CharField(max_length=20, choices=MOTIVOS, blank=True)
+    vence_en = models.DateTimeField(null=True, blank=True, help_text="Después de esta fecha la contraseña asignada ya no permite iniciar sesión.")
+    cambiada_en = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        verbose_name = "Estado de contraseña"
+        verbose_name_plural = "Estados de contraseña"
+
+    def __str__(self):
+        return f"{self.usuario.username}: {'debe cambiarla' if self.debe_cambiar_clave else 'al día'}"
+
+    def vencida(self, ahora=None):
+        from django.utils import timezone
+        return bool(self.debe_cambiar_clave and self.vence_en and (ahora or timezone.now()) >= self.vence_en)

@@ -1,0 +1,12 @@
+<table class="tabla">
+    <thead>
+        <tr><th>{{ etiqueta }}</th><th>Total</th>{% for valor, nombre in estados %}<th>{{ nombre }}</th>{% endfor %}<th>Vencidos</th><th>% realizado</th><th>% pendiente</th></tr>
+    </thead>
+    <tbody>
+        {% for f in filas %}
+        <tr><td>{{ f.nombre }}</td><td>{{ f.total }}</td>{% for n in f.estados_lista %}<td>{{ n }}</td>{% endfor %}<td>{% if f.vencidos %}<span class="estado rojo">{{ f.vencidos }}</span>{% else %}0{% endif %}</td><td>{{ f.por_realizado }}%</td><td>{{ f.por_pendiente }}%</td></tr>
+        {% empty %}
+        <tr><td colspan="9">Sin compromisos en el rango.</td></tr>
+        {% endfor %}
+    </tbody>
+</table>
