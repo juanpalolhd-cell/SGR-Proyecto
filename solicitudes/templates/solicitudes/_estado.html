@@ -1,0 +1,1 @@
+{% if s.estado == "Cerrada" %}<span class="estado verde">{{ s.estado }}</span>{% elif s.estado == "Rechazada" or s.estado == "Anulada" %}<span class="estado rojo">{{ s.estado }}</span>{% elif s.estado == "Ingresada" %}<span class="estado gris">{{ s.estado }}</span>{% else %}<span class="estado ambar">{{ s.estado }}</span>{% endif %}

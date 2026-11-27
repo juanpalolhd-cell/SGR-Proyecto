@@ -50,6 +50,12 @@ def periodos_cerrados_de(obj):
         if obj.asignacion_id and periodo_cerrado(obj.asignacion.periodo):
             encontrados.append(obj.asignacion.periodo)
         encontrados += _periodos_cerrados_por_fecha(obj.fecha_atencion)
+    elif type(obj).__name__ == "Solicitud" and type(obj)._meta.app_label == "solicitudes":
+        # V4.3: una solicitud queda bloqueada si su asignación es de un período cerrado
+        # o si se cerró dentro de un período cerrado.
+        if obj.asignacion_id and periodo_cerrado(obj.asignacion.periodo):
+            encontrados.append(obj.asignacion.periodo)
+        encontrados += _periodos_cerrados_por_fecha(obj.fecha_cierre)
     elif isinstance(obj, Evidencia):
         if obj.actividad_id:
             encontrados += periodos_cerrados_de(obj.actividad)

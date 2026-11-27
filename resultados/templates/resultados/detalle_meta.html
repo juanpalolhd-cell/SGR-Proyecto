@@ -27,7 +27,7 @@
         <dt>Avance manual</dt>
         <dd>{{ meta.avance }}{% if not usa_calculado %} (usado en el cálculo){% endif %}</dd>
         <dt>Avance calculado (RN-003/RN-009)</dt>
-        <dd>{{ avance_calculado }}{% if usa_calculado %} (usado en el cálculo){% endif %} · {{ avance_detalle.actividades }} actividad(es) válidas, {{ avance_detalle.gestiones }} gestión(es) atendidas{% if avance_detalle.exige_evidencia %}; exige evidencia aprobada ({{ avance_detalle.sin_evidencia }} registro(s) sin evidencia aprobada no cuentan){% endif %}</dd>
+        <dd>{{ avance_calculado }}{% if usa_calculado %} (usado en el cálculo){% endif %} · {{ avance_detalle.actividades }} actividad(es) válidas, {{ avance_detalle.gestiones }} gestión(es) atendidas{% if avance_detalle.solo_presenciales %} (solo presenciales: gestiones con Visita = Sí y actividades de tipo Visita){% else %}, {{ avance_detalle.solicitudes }} solicitud(es) de vecinos cerradas{% if avance_detalle.solicitudes_parcial %} + {{ avance_detalle.solicitudes_parcial }} por avance parcial de solicitudes abiertas{% endif %}{% endif %}{% if avance_detalle.exige_evidencia %}; exige evidencia aprobada ({{ avance_detalle.sin_evidencia }} registro(s) sin evidencia aprobada no cuentan){% endif %}</dd>
         <dt>Ponderador</dt>
         <dd>{{ meta.ponderador }}%</dd>
         <dt>% Cumplimiento</dt>

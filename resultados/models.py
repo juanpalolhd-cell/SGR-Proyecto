@@ -62,5 +62,6 @@ class CatalogoMeta(DomainMixin, models.Model):
     tipo = models.CharField(max_length=30, choices=[("individual", "Individual"), ("colectiva", "Colectiva")])
     unidad_medida = models.CharField(max_length=80)
     requiere_evidencia = models.BooleanField(default=False)
+    solo_presenciales = models.BooleanField("Solo atenciones presenciales", default=False, help_text="Si está marcado, el avance calculado cuenta solo gestiones atendidas con Visita = Sí y actividades de tipo Visita (V4.3).")
     estado = models.BooleanField(default=True)
     def __str__(self): return self.nombre

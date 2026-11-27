@@ -6,10 +6,10 @@ from django.core.management.base import BaseCommand
 from django.db import transaction
 
 ORG_APPS = ('organizacion',)
-EDIT_APPS = ('actividades', 'agenda', 'resultados')
+EDIT_APPS = ('actividades', 'agenda', 'resultados', 'solicitudes')
 ALL_APPS = ORG_APPS + EDIT_APPS
 # Modelos de auditoría: todos los roles solo pueden verlos; nadie los edita desde el sitio.
-SOLO_LECTURA = ('historialestado',)
+SOLO_LECTURA = ('historialestado', 'historialsolicitud')
 # Modelos internos de seguridad (V4.2): ningún grupo recibe permisos; se gestionan solo desde las vistas de cuenta.
 INTERNOS = ('estadoclave',)
 

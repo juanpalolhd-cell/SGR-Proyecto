@@ -204,6 +204,7 @@ def tablero_unidad(request):
                     "suma_ponderaciones": r["suma_ponderaciones"],
                     "suma_ok": r["suma_ok"],
                     "tiene_metas": r["tiene_metas"],
+                    "presenciales": _presenciales(p, periodo),
                 }
             )
         tablero.append(
@@ -214,6 +215,12 @@ def tablero_unidad(request):
         "resultados/tablero_unidad.html",
         {"tablero": tablero, "umbral": umbral, "periodo": periodo, "periodos": periodos, "expected": _expected(periodo) if periodo else 0},
     )
+
+
+def _presenciales(persona, periodo):
+    """V4.3: atenciones presenciales del período (gestiones atendidas con Visita = Sí) de las metas del funcionario."""
+    from actividades.models import GestionSocial
+    return GestionSocial.objects.filter(asignacion__persona=persona, visita=True, estado="atendida", fecha_atencion__gte=periodo.inicio, fecha_atencion__lte=periodo.termino).count()
 
 
 def _colectivo(filas, umbral):

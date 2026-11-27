@@ -25,6 +25,7 @@
                 <th>Meta esperada</th>
                 <th>Semáforo</th>
                 <th>Suma ponderaciones</th>
+                <th title="Gestiones atendidas con Visita = Sí en el período">Atenciones presenciales</th>
                 <th>Ficha</th>
             </tr>
         </thead>
@@ -40,10 +41,11 @@
                     <span class="estado {{ m.semaforo }}">{{ m.semaforo }}</span>
                 </td>
                 <td>{% if not m.tiene_metas %}—{% elif m.suma_ok %}{{ m.suma_ponderaciones }}%{% else %}<span class="estado ambar" title="RN-001: debe sumar 100%">{{ m.suma_ponderaciones }}%</span>{% endif %}</td>
+                <td>{{ m.presenciales }}</td>
                 <td><a class="boton" href="{% url 'resultado_persona' m.persona_id %}{% if periodo %}?periodo={{ periodo.pk }}{% endif %}">Ver</a></td>
             </tr>
             {% empty %}
-            <tr><td colspan="7">Sin funcionarios.</td></tr>
+            <tr><td colspan="8">Sin funcionarios.</td></tr>
             {% endfor %}
         </tbody>
     </table>

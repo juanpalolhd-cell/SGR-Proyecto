@@ -207,3 +207,14 @@ Antes de cualquier cambio se creó en el Escritorio `back_end_respaldo_20261108_
 ## ZIP de entrega
 
 `Equipo_BackEnd_Evaluacion3.zip` incluye código, migraciones, templates, estáticos, JSON ficticios, dependencias, README, `Evidencias.pdf`, `evidencias.md` y la carpeta `capturas_evidencia/` (43 capturas). Excluye venv, __pycache__, BD privada, .env, claves, contraseñas reales, respaldos y temporales. No es un respaldo de datos. Conservar por separado las credenciales privadas y demostrar las dos cuentas normales por el medio que indique la docente.
+
+## V4.3 · Solicitudes de vecinos, empresas contratistas y metas presenciales (27/11/2026)
+
+- **Solicitudes de vecinos** (menú «Solicitudes», `/solicitudes/`): al elegir el vecino el sistema consulta si pertenece a una junta de vecinos y su cargo («Pertenece a JJVV X – cargo Y» o «Sin cargo»); si tiene cargo se informa y se puede continuar. La consulta queda registrada en la solicitud y en su historial.
+- **Flujo con % de avance automático** (un paso a la vez): Ingresada 10 % → En supervisión/verificación 25 % → Derivada a empresa 50 % → En ejecución 75 % → Verificación de realizado 90 % → Cerrada 100 %. Rechazada/Anulada = 0 % (no cuentan). Devolver a una etapa anterior, rechazar o anular exige observación. Porcentajes en `data/resultados.json` → `parametros.solicitud_avance`.
+- **Empresas contratistas**: CRUD en Gestión (`/gestion/empresas/`), entidad complementaria (las 17 entidades de la evaluación no cambian).
+- **Avance calculado**: las solicitudes Cerradas dentro del período suman 1 a la asignación (meta) indicada; con `solicitudes_avance_parcial: true` las abiertas aportan su % / 100. El avance manual sigue siendo la fuente por defecto (`fuente_avance: manual`) y ambos se muestran en el detalle de la meta. Se respetan RN-001 y RN-013 (período cerrado bloquea cambios).
+- **Metas «solo presenciales»**: casilla en el catálogo de metas; cuenta solo gestiones atendidas con Visita = Sí y actividades de tipo Visita. El tablero muestra la columna «Atenciones presenciales».
+- **Permisos** (`setup_roles`, idempotente): Acceso total todo; Intermedio ver/crear/editar solicitudes y ver empresas; Mínimo solo lectura. El historial es de solo lectura para todos.
+- **Pruebas**: 176 (149 anteriores + 27 de V4.3) con `python manage.py test --settings=sgr.settings_pruebas`.
+- **Despliegue**: `deploy/deploy_v43.sh` + `sgr_v43_deploy.tgz` (respaldo de app, env y base antes de migrar; migraciones solo aditivas).

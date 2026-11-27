@@ -30,4 +30,5 @@ urlpatterns = [
     path('actividades/', include('actividades.urls')),
     path('agenda/', include('agenda.urls')),
     path('resultados/', include('resultados.urls')),
+    path('solicitudes/', include('solicitudes.urls')),
 ]

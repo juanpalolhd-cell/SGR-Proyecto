@@ -231,3 +231,46 @@ class EstadoClave(models.Model):
     def vencida(self, ahora=None):
         from django.utils import timezone
         return bool(self.debe_cambiar_clave and self.vence_en and (ahora or timezone.now()) >= self.vence_en)
+
+
+class Empresa(DomainMixin, models.Model):
+    """V4.3: empresa o contratista a la que se deriva la ejecución de una solicitud."""
+    codigo = models.CharField(max_length=30, unique=True, null=True, blank=True)
+    nombre = models.CharField(max_length=150, unique=True)
+    rut = models.CharField("RUT ficticio", max_length=20, unique=True, null=True, blank=True)
+    rubro = models.CharField(max_length=150, blank=True)
+    contacto = models.CharField(max_length=150, blank=True)
+    telefono = models.CharField(max_length=30, blank=True, validators=[validar_telefono])
+    correo = models.EmailField(blank=True)
+    estado = models.BooleanField(default=True)
+
+    class Meta:
+        ordering = ["nombre"]
+        verbose_name = "Empresa contratista"
+        verbose_name_plural = "Empresas contratistas"
+
+    def __str__(self):
+        return self.nombre
+
+
+def participaciones_vigentes(vecino):
+    """Participaciones activas del vecino en juntas de vecinos (V4.3)."""
+    if not vecino:
+        return []
+    return list(Participacion.objects.filter(vecino=vecino, estado=True).select_related("junta").order_by("-dirigente", "junta__nombre"))
+
+
+def resumen_jjvv(vecino):
+    """Texto y datos de pertenencia a JJVV y cargo para la consulta al ingresar una solicitud."""
+    parts = participaciones_vigentes(vecino)
+    if not parts:
+        return {"pertenece": False, "con_cargo": False, "junta": None, "cargo": "", "texto": "No pertenece a ninguna junta de vecinos registrada · Sin cargo"}
+    p = parts[0]
+    cargo = p.cargo.strip() if p.dirigente and p.cargo else ""
+    if cargo:
+        texto = f"Pertenece a JJVV {p.junta.nombre} – cargo {cargo}"
+    else:
+        texto = f"Pertenece a JJVV {p.junta.nombre} – Sin cargo"
+    if len(parts) > 1:
+        texto += f" (y {len(parts) - 1} junta(s) más)"
+    return {"pertenece": True, "con_cargo": bool(cargo), "junta": p.junta, "cargo": cargo, "texto": texto}

@@ -14,10 +14,16 @@ def avance_calculado(meta):
 
     Si el catálogo exige evidencia, cada registro cuenta solo con al menos una evidencia Aprobada;
     las rechazadas o anuladas nunca cuentan. Devuelve (cantidad, detalle).
+    V4.3: si el catálogo es «solo presenciales», cuenta solo gestiones con Visita = Sí y actividades
+    de tipo Visita. Además suman las solicitudes de vecinos Cerradas dentro del período (1 cada una) y,
+    si el parámetro solicitudes_avance_parcial es true, las abiertas aportan su porcentaje / 100.
+    Rechazadas y anuladas nunca cuentan.
     """
+    from sgr.parametros import parametros
     periodo = meta.periodo
     exige = bool(meta.catalogo_id and meta.catalogo.requiere_evidencia)
-    detalle = {"actividades": 0, "gestiones": 0, "sin_evidencia": 0, "exige_evidencia": exige}
+    presencial = bool(meta.catalogo_id and getattr(meta.catalogo, "solo_presenciales", False))
+    detalle = {"actividades": 0, "gestiones": 0, "sin_evidencia": 0, "exige_evidencia": exige, "solo_presenciales": presencial, "solicitudes": 0, "solicitudes_parcial": 0.0}
 
     def cuenta(registro):
         if not exige:
@@ -25,6 +31,8 @@ def avance_calculado(meta):
         return any(evidencia_aprobada(e) for e in registro.evidencias.all())
 
     actividades = meta.actividades_asignadas.filter(fecha__gte=periodo.inicio, fecha__lte=periodo.termino).prefetch_related("evidencias")
+    if presencial:
+        actividades = actividades.filter(tipo="visita")
     for a in actividades:
         if normalizar(a.estado) in ESTADOS_ACTIVIDAD_VALIDOS:
             if cuenta(a):
@@ -32,12 +40,28 @@ def avance_calculado(meta):
             else:
                 detalle["sin_evidencia"] += 1
     gestiones = meta.gestiones.filter(estado="atendida", fecha_atencion__gte=periodo.inicio, fecha_atencion__lte=periodo.termino).prefetch_related("evidencias")
+    if presencial:
+        gestiones = gestiones.filter(visita=True)
     for g in gestiones:
         if cuenta(g):
             detalle["gestiones"] += 1
         else:
             detalle["sin_evidencia"] += 1
-    return detalle["actividades"] + detalle["gestiones"], detalle
+    total = detalle["actividades"] + detalle["gestiones"]
+    if not presencial and hasattr(meta, "solicitudes"):
+        from solicitudes.models import CERRADA, NO_CUENTAN, porcentaje_estado
+        params = parametros()
+        cerradas = meta.solicitudes.filter(estado=CERRADA, fecha_cierre__gte=periodo.inicio, fecha_cierre__lte=periodo.termino).count()
+        detalle["solicitudes"] = cerradas
+        total += cerradas
+        if params.get("solicitudes_avance_parcial") in (True, "true", "True", 1, "1"):
+            abiertas = meta.solicitudes.exclude(estado__in=[CERRADA, *NO_CUENTAN]).filter(fecha_ingreso__lte=periodo.termino)
+            parcial = round(sum(porcentaje_estado(s.estado, params) for s in abiertas) / 100, 2)
+            detalle["solicitudes_parcial"] = parcial
+            total += parcial
+    if isinstance(total, float):
+        total = round(total, 2)
+    return total, detalle
 
 
 def meta_esperada(periodo, hoy=None):

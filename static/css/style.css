@@ -488,3 +488,16 @@ h3 {
 
 /* V4.2: contraseña temporal mostrada una sola vez */
 .clave-temporal code { display: inline-block; font-size: 1.4em; letter-spacing: 2px; padding: 8px 14px; background: #fff; border: 1px dashed #c77700; user-select: all; }
+
+/* V4.3 · Solicitudes de vecinos */
+.barra-avance { display: inline-block; width: 90px; height: 10px; background: #e5e8eb; border-radius: 5px; overflow: hidden; vertical-align: middle; }
+.barra-avance-relleno { height: 100%; background: #2e86c1; }
+.barra-avance-relleno.barra-nula { background: #bdc3c7; }
+.barra-avance-texto { margin-left: 6px; font-size: 0.9em; }
+.celda-avance { white-space: nowrap; }
+.etapas { display: flex; flex-wrap: wrap; gap: 6px; list-style: none; padding: 0; margin: 10px 0 16px; }
+.etapas li { flex: 1 1 120px; background: #eef1f4; border-radius: 4px; padding: 6px 8px; text-align: center; font-size: 0.9em; }
+.etapas li.etapa-actual { background: #2e86c1; color: #fff; font-weight: bold; }
+.conteo-estados { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0 12px; }
+.chip { display: inline-block; padding: 4px 10px; border-radius: 14px; background: #eef1f4; color: #1f3a5f; text-decoration: none; font-size: 0.9em; }
+.chip-activo { background: #1f3a5f; color: #fff; }

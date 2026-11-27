@@ -9,12 +9,12 @@ from django.http import Http404
 from django.shortcuts import render
 from django.urls import reverse
 from django.views.generic import ListView, DetailView, CreateView, UpdateView, DeleteView
-from .catalog import SPECS, permission, menu
+from .catalog import ALL_SPECS as SPECS, permission, menu, menu_extra
 from .reglas import es_acceso_total, mensaje_periodo_cerrado, periodo_cerrado, periodos_cerrados_de
 
 @login_required
 def index(request):
-    return render(request, "catalog/index.html", {"entidades": menu()})
+    return render(request, "catalog/index.html", {"entidades": menu(), "extras": menu_extra()})
 
 class CatalogMixin(PermissionRequiredMixin):
     action = "view"
@@ -47,6 +47,11 @@ class CatalogMixin(PermissionRequiredMixin):
                 ctx["puede_establecer_clave"] = bool(obj.usuario_id) and es_acceso_total(self.request.user) and obj.usuario_id != self.request.user.pk
                 ctx["nueva_cuenta"] = self.request.GET.get("nueva_cuenta") == "1" and bool(obj.usuario_id)
                 values += [("Contraseña", ("Establecida" if obj.usuario.has_usable_password() else "Pendiente: la cuenta aún no tiene contraseña utilizable") if obj.usuario_id else "—"), ("Último acceso", (obj.usuario.last_login or "Nunca") if obj.usuario_id else "Pendiente de vincular"), ("Grupos de acceso (solo lectura)", ", ".join(obj.usuario.groups.values_list("name", flat=True)) if obj.usuario_id else "—"), ("Roles relacionados (solo lectura)", ", ".join(obj.roles_rel.values_list("nombre", flat=True)))]
+            if slug == "vecinos":
+                from organizacion.models import resumen_jjvv
+                ctx["participaciones"] = obj.participaciones.select_related("junta").order_by("-estado", "-dirigente", "junta__nombre")
+                ctx["resumen_jjvv"] = resumen_jjvv(obj)
+                ctx["solicitudes_vecino"] = obj.solicitudes.all()[:10] if hasattr(obj, "solicitudes") else []
             if slug == "roles": values.append(("Grupo de permisos (solo lectura)", obj.grupo or "Asignar por administración protegida"))
             ctx["valores"] = values
             ctx["objeto_etiqueta"] = str(obj)

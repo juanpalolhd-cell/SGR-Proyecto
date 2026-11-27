@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}{{ titulo }}{% endblock %}
+{% block content %}
+<a class="enlace-volver" href="{{ volver_url }}">&larr; Volver</a>
+<div class="detalle-caja form-caja">
+    <h2>{{ titulo }}</h2>
+    {% if not object %}<p class="ayuda">Paso 1: elija el vecino; el sistema consulta si pertenece a una junta de vecinos y su cargo. Si no tiene cargo, ingrese la solicitud. Si tiene cargo, se le informa y puede continuar. La solicitud queda en estado <strong>Ingresada (10 %)</strong>.</p>{% endif %}
+    <form method="post" novalidate>{% csrf_token %}
+        {% if form.non_field_errors %}<ul class="mensajes">{% for error in form.non_field_errors %}<li class="error">{{ error }}</li>{% endfor %}</ul>{% endif %}
+        {% for field in form %}
+        <div class="form-grupo">
+            <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+            {{ field }}
+            {% if field.name == "vecino" %}<div id="jjvv-resultado" class="aviso aviso-info" data-url="{{ url_jjvv }}" {% if object %}hidden{% endif %}>{% if object %}{% else %}Seleccione un vecino para consultar su junta de vecinos y cargo.{% endif %}</div>{% if object %}<p class="ayuda">Consulta JJVV registrada al ingresar: {% if object.junta %}{{ object.junta.nombre }} – {{ object.cargo_jjvv|default:"Sin cargo" }}{% else %}Sin JJVV · Sin cargo{% endif %}</p>{% endif %}{% endif %}
+            {% if field.help_text %}<p class="ayuda">{{ field.help_text }}</p>{% endif %}
+            {% for error in field.errors %}<p class="error-campo">{{ error }}</p>{% endfor %}
+        </div>
+        {% endfor %}
+        <div class="acciones-form">
+            <button type="submit" class="btn-primario">{% if object %}Guardar cambios{% else %}Ingresar solicitud{% endif %}</button>
+            <a class="boton boton-secundario" href="{{ volver_url }}">Cancelar</a>
+        </div>
+    </form>
+</div>
+{% if not object %}<script src="{% static 'js/solicitud.js' %}"></script>{% endif %}
+{% endblock %}

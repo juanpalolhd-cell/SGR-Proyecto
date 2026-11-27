@@ -23,6 +23,7 @@
             <a href="{% url 'catalog_lista' 'actividades' %}">Actividades</a>
             <a href="{% url 'catalog_lista' 'hitos' %}">Hitos</a>
             {% if perms.agenda.view_compromiso %}<a href="{% url 'lista_compromisos' %}">Tubo de trabajo</a>{% endif %}
+            {% if perms.solicitudes.view_solicitud %}<a href="{% url 'lista_solicitudes' %}">Solicitudes</a>{% endif %}
             <a href="{% url 'catalog_lista' 'asignaciones' %}">Resultados</a>
             {% if perms.resultados.view_meta %}<a href="{% url 'tablero_unidad' %}">Tablero</a>{% endif %}
             {% if user.is_staff %}

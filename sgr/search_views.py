@@ -1,7 +1,7 @@
 from django.db.models import Q
 from django.shortcuts import render
 from django.views import View
-from .catalog import SPECS, permission
+from .catalog import ALL_SPECS as SPECS, permission
 
 class BusquedaGlobalView(View):
     def get(self, request):

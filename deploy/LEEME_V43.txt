@@ -1,0 +1,17 @@
+SGR V4.3 - Kit de despliegue (sobre V4.2 + HTTPS activo)
+========================================================
+Contenido
+  sgr_v43_deploy.tgz(.sha256)  código V4.3 (sin base de datos, venv ni secretos)
+  deploy_v43.sh                respaldo (app, /etc/sgr/sgr.env, mysqldump) -> migrate -> setup_roles (sin usuarios)
+                               -> collectstatic -> reinicio -> prueba de humo por HTTPS
+
+Con el laboratorio de AWS Academy encendido:
+  0. (Recomendado) instantánea de RDS:  aws rds create-db-snapshot --db-instance-identifier sgr-mysql --db-snapshot-identifier sgr-mysql-pre-v43-<fecha>
+  1. Copiar sgr_v43_deploy.tgz, .sha256 y deploy_v43.sh a /tmp/sgr_v43/ de la instancia sgr-app
+     (Session Manager / SSM o scp).
+  2. sudo bash /tmp/sgr_v43/deploy_v43.sh /tmp/sgr_v43/sgr_v43_deploy.tgz
+  3. Debe terminar con "DESPLIEGUE V4.3 OK".
+
+No toca HTTPS (nginx/certificado), ni las variables de correo, ni cuentas o contraseñas.
+Migraciones nuevas (aditivas): organizacion 0007_empresa, resultados 0004_catalogometa_solo_presenciales, solicitudes 0001_initial.
+Reversión: el script imprime los comandos (restaurar el tgz de respaldo; migrate solicitudes zero, resultados 0003, organizacion 0006).

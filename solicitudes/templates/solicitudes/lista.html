@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block title %}Solicitudes de vecinos{% endblock %}
+{% block content %}
+<div class="cabecera-lista">
+    <h2>Solicitudes de vecinos</h2>
+    <div class="acciones-lista">
+        {% if perms.solicitudes.add_solicitud %}<a class="boton" href="{% url 'crear_solicitud' %}">Ingresar solicitud</a>{% endif %}
+    </div>
+</div>
+<a class="enlace-volver" href="{% url 'home' %}">&larr; Volver al inicio</a>
+<p class="ayuda">Flujo: {% for e in etapas %}{{ e.estado }} <strong>{{ e.porcentaje }} %</strong>{% if not forloop.last %} → {% endif %}{% endfor %}. Rechazada o Anulada = 0 % (no cuentan). Se avanza un paso a la vez; devolver a una etapa anterior exige observación. Porcentajes configurables en el parámetro <code>solicitud_avance</code>.</p>
+<div class="conteo-estados">{% for e, n in conteo %}<a class="chip{% if e == estado %} chip-activo{% endif %}" href="?estado={{ e|urlencode }}">{{ e }}: <strong>{{ n }}</strong></a>{% endfor %}</div>
+<form class="filtro-lista" method="get">
+    <input type="search" name="q" value="{{ q }}" placeholder="Código, asunto, vecino, RUT o empresa…" aria-label="Texto">
+    <select name="estado" aria-label="Estado"><option value="">Todos los estados</option>{% for v, et in estados %}<option value="{{ v }}"{% if v == estado %} selected{% endif %}>{{ et }}</option>{% endfor %}</select>
+    <select name="responsable" aria-label="Responsable"><option value="">Todos los responsables</option>{% for p in responsables %}<option value="{{ p.pk }}"{% if p.pk|stringformat:'d' == responsable %} selected{% endif %}>{{ p.nombre }}</option>{% endfor %}</select>
+    <button type="submit" class="btn-primario">Filtrar</button>
+    {% if hay_filtros %}<a class="boton boton-secundario" href="{% url 'lista_solicitudes' %}">Limpiar</a>{% endif %}
+</form>
+<table class="tabla">
+    <thead><tr><th>Código</th><th>Ingreso</th><th>Vecino</th><th>JJVV / cargo al ingresar</th><th>Asunto</th><th>Responsable</th><th>Empresa</th><th>Estado</th><th>Avance</th><th>Acciones</th></tr></thead>
+    <tbody>
+    {% for s in solicitudes %}
+        <tr>
+            <td>{{ s.codigo }}</td>
+            <td>{{ s.fecha_ingreso|date:"d-m-Y" }}</td>
+            <td>{{ s.vecino }}</td>
+            <td>{% if s.junta %}{{ s.junta.nombre }} · {{ s.cargo_jjvv|default:"Sin cargo" }}{% else %}Sin JJVV · Sin cargo{% endif %}</td>
+            <td>{{ s.asunto }}</td>
+            <td>{{ s.responsable.nombre }}</td>
+            <td>{{ s.empresa|default:"—" }}</td>
+            <td>{% include "solicitudes/_estado.html" %}</td>
+            <td class="celda-avance">{% include "solicitudes/_avance.html" %}</td>
+            <td><a class="boton" href="{% url 'detalle_solicitud' s.pk %}">Ver</a></td>
+        </tr>
+    {% empty %}
+        <tr><td colspan="10">{% if hay_filtros %}No hay solicitudes con esos filtros.{% else %}Aún no hay solicitudes registradas. {% if perms.solicitudes.add_solicitud %}Use «Ingresar solicitud» para registrar la primera.{% endif %}{% endif %}</td></tr>
+    {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

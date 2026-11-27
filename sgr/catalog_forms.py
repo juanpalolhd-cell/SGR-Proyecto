@@ -6,7 +6,7 @@ from django.db.models import Sum
 from decimal import Decimal
 import logging
 from sgr.reglas import es_acceso_total, normalizar, periodo_cerrado
-from organizacion.models import Unidad, Persona, Cargo, Rol, Territorio, Vecino, JuntaVecinos, Participacion, TipoAtencion, SubAtencion
+from organizacion.models import Unidad, Persona, Cargo, Rol, Territorio, Vecino, JuntaVecinos, Participacion, TipoAtencion, SubAtencion, Empresa
 from agenda.models import Hito
 from actividades.models import Actividad, Evidencia, GestionSocial
 from resultados.models import Periodo, Meta, CatalogoMeta
@@ -161,7 +161,7 @@ class SubtipoForm(BaseForm):
 class MetaForm(BaseForm):
     class Meta:
         model = CatalogoMeta
-        fields = ["codigo", "nombre", "descripcion", "tipo", "unidad_medida", "requiere_evidencia", "estado"]
+        fields = ["codigo", "nombre", "descripcion", "tipo", "unidad_medida", "requiere_evidencia", "solo_presenciales", "estado"]
 
 class AsignacionForm(BaseForm):
     required_fields = ("catalogo",)
@@ -248,3 +248,10 @@ class GestionForm(BaseForm):
     class Meta:
         model = GestionSocial
         fields = ["fecha_ingreso", "fecha_atencion", "beneficiario", "tipo", "subtipo", "asignacion", "visita", "actuaciones", "derivacion", "informe", "beneficio", "resultado", "estado"]
+
+
+class EmpresaForm(BaseForm):
+    """V4.3: empresa o contratista que ejecuta las solicitudes derivadas."""
+    class Meta:
+        model = Empresa
+        fields = ["codigo", "nombre", "rut", "rubro", "contacto", "telefono", "correo", "estado"]

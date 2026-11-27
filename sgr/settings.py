@@ -75,6 +75,7 @@ INSTALLED_APPS = [
     'actividades',
     'agenda',
     'resultados',
+    'solicitudes',
 ]
 
 MIDDLEWARE = [

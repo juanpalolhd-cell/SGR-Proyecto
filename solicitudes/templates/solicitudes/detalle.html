@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block title %}Solicitud {{ s.codigo }}{% endblock %}
+{% block content %}
+<a class="enlace-volver" href="{% url 'lista_solicitudes' %}">&larr; Volver a solicitudes</a>
+<h2>Solicitud {{ s.codigo }} · {{ s.asunto }}</h2>
+{% if bloqueo %}<div class="aviso aviso-rojo">{{ bloqueo }}</div>{% endif %}
+<ol class="etapas">{% for e in etapas %}<li class="{% if e.estado == s.estado %}etapa-actual{% endif %}">{{ e.estado }}<br><small>{{ e.porcentaje }} %</small></li>{% endfor %}</ol>
+<div class="detalle-caja"><dl>
+    <dt><strong>Estado</strong></dt><dd>{% include "solicitudes/_estado.html" %}{% if no_cuenta %} <span class="ayuda">(no cuenta para el avance)</span>{% endif %}</dd>
+    <dt><strong>Avance</strong></dt><dd class="celda-avance">{% include "solicitudes/_avance.html" %}</dd>
+    <dt><strong>Fecha de ingreso</strong></dt><dd>{{ s.fecha_ingreso|date:"d-m-Y" }}</dd>
+    <dt><strong>Vecino</strong></dt><dd>{{ s.vecino }} · RUT {{ s.vecino.rut }} · <a href="{% url 'catalog_detalle' 'vecinos' s.vecino_id %}">ficha</a></dd>
+    <dt><strong>Consulta JJVV al ingresar</strong></dt><dd>{% if s.junta %}Pertenece a JJVV {{ s.junta.nombre }} – {% if s.cargo_jjvv %}cargo {{ s.cargo_jjvv }}{% else %}Sin cargo{% endif %}{% else %}No pertenecía a ninguna junta registrada · Sin cargo{% endif %}</dd>
+    <dt><strong>Situación JJVV actual</strong></dt><dd>{{ jjvv_actual.texto }}</dd>
+    <dt><strong>Descripción</strong></dt><dd>{{ s.descripcion|linebreaksbr }}</dd>
+    <dt><strong>Funcionario responsable</strong></dt><dd>{{ s.responsable.nombre }}</dd>
+    <dt><strong>Asignación de meta</strong></dt><dd>{% if s.asignacion %}<a href="{% url 'detalle_meta' s.asignacion_id %}">{{ s.asignacion }}</a> · {{ s.asignacion.periodo }}{% else %}—{% endif %}</dd>
+    <dt><strong>Empresa contratista</strong></dt><dd>{{ s.empresa|default:"—" }}</dd>
+    <dt><strong>Fecha comprometida</strong></dt><dd>{{ s.fecha_comprometida|date:"d-m-Y"|default:"—" }}</dd>
+    <dt><strong>Fecha de cierre</strong></dt><dd>{{ s.fecha_cierre|date:"d-m-Y"|default:"—" }}</dd>
+    <dt><strong>Observaciones</strong></dt><dd>{{ s.observaciones|default:"—"|linebreaksbr }}</dd>
+</dl></div>
+{% if puede_editar %}<a class="boton" href="{% url 'editar_solicitud' s.pk %}">Editar datos</a>{% endif %}
+{% if form_estado %}
+<div class="detalle-caja form-caja">
+    <h3>Cambiar estado (un paso a la vez)</h3>
+    <form method="post" action="{% url 'estado_solicitud' s.pk %}" novalidate>{% csrf_token %}
+        {% if form_estado.non_field_errors %}<ul class="mensajes">{% for e in form_estado.non_field_errors %}<li class="error">{{ e }}</li>{% endfor %}</ul>{% endif %}
+        {% for field in form_estado %}<div class="form-grupo"><label for="{{ field.id_for_label }}">{{ field.label }}</label>{{ field }}{% if field.help_text %}<p class="ayuda">{{ field.help_text }}</p>{% endif %}{% for e in field.errors %}<p class="error-campo">{{ e }}</p>{% endfor %}</div>{% endfor %}
+        <div class="acciones-form"><button type="submit" class="btn-primario">Registrar cambio de estado</button></div>
+    </form>
+</div>
+{% elif not puede_cambiar and s.estado != "Cerrada" and s.estado != "Rechazada" and s.estado != "Anulada" and not bloqueo %}<p class="ayuda">Su perfil solo permite consultar la solicitud.</p>{% endif %}
+<h3>Historial de estados</h3>
+<table class="tabla"><thead><tr><th>Fecha</th><th>Usuario</th><th>De</th><th>A</th><th>Avance</th><th>Observación</th></tr></thead><tbody>
+{% for h in historial %}<tr><td>{{ h.fecha|date:"d-m-Y H:i" }}</td><td>{{ h.usuario.username|default:"—" }}</td><td>{{ h.estado_anterior|default:"—" }}</td><td>{{ h.estado_nuevo }}</td><td>{{ h.porcentaje }} %</td><td>{{ h.observacion }}</td></tr>{% empty %}<tr><td colspan="6">Sin movimientos.</td></tr>{% endfor %}
+</tbody></table>
+{% endblock %}

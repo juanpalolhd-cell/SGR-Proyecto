@@ -20,9 +20,18 @@ SPECS = {
     "trimestres": ("Trimestre", f.TrimestreForm, True),
 }
 
+# V4.3: entidades complementarias fuera de las 17 de la evaluación (mismo CRUD del sitio).
+EXTRA_SPECS = {
+    "empresas": ("Empresa contratista", f.EmpresaForm, False),
+}
+ALL_SPECS = {**SPECS, **EXTRA_SPECS}
+
 def permission(slug, action):
-    model = SPECS[slug][1]._meta.model
+    model = ALL_SPECS[slug][1]._meta.model
     return f"{model._meta.app_label}.{action}_{model._meta.model_name}"
 
 def menu():
     return [{"slug": slug, "nombre": spec[0]} for slug, spec in SPECS.items()]
+
+def menu_extra():
+    return [{"slug": slug, "nombre": spec[0]} for slug, spec in EXTRA_SPECS.items()]

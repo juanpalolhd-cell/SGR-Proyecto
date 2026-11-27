@@ -197,7 +197,9 @@ class CambioObligatorioTests(BaseV42):
         call_command("setup_roles", verbosity=0)
         call_command("setup_roles", verbosity=0)
         conteos = {g.name: g.permissions.count() for g in Group.objects.filter(name__in=["Acceso total", "Intermedio", "Minimo"])}
-        self.assertEqual(conteos, {"Acceso total": 85, "Intermedio": 38, "Minimo": 22})
+        # V4.3: +Empresa (4 permisos; Intermedio y Mínimo solo ver), +Solicitud (4; Intermedio ver/crear/editar,
+        # Mínimo ver) y +HistorialSolicitud (solo lectura para todos): 85+9, 38+5, 22+3.
+        self.assertEqual(conteos, {"Acceso total": 94, "Intermedio": 43, "Minimo": 25})
         self.assertFalse(Permission.objects.filter(content_type__model="estadoclave", group__isnull=False).exists())
 
 
