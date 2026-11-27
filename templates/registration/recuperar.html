@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block title %}Recuperar contraseña{% endblock %}
+{% block content %}
+<section class="auth-card">
+    <h2>Recuperar contraseña</h2>
+    {% if limitado %}<ul class="mensajes"><li class="error">Demasiadas solicitudes desde esta conexión. Intente de nuevo más tarde.</li></ul>{% endif %}
+    <p class="ayuda">Escriba el correo de su cuenta. Si corresponde a una cuenta activa, recibirá un enlace para crear una contraseña nueva. El enlace sirve <strong>una sola vez</strong> y vence.</p>
+    <form method="post" novalidate>
+        {% include "registration/_form_clave.html" %}
+        <button type="submit" class="btn-primario">Enviar enlace</button>
+    </form>
+    <p class="ayuda"><a href="{% url 'login' %}">&larr; Volver a iniciar sesión</a></p>
+</section>
+{% endblock %}

@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block title %}Contraseña temporal{% endblock %}
+{% block content %}
+<a class="enlace-volver" href="{{ volver_url }}">&larr; Volver al funcionario</a>
+<div class="detalle-caja form-caja">
+    <h2>Contraseña temporal generada</h2>
+    <p class="ayuda">Funcionario: <strong>{{ persona.nombre }}</strong> · cuenta <strong>{{ cuenta.get_username }}</strong>.</p>
+    <div class="aviso aviso-ambar">
+        <p><strong>Esta es la única vez que se muestra.</strong> Cópiela ahora y entréguela por un medio seguro. Si se pierde, genere otra.</p>
+        <p class="clave-temporal"><code>{{ clave }}</code></p>
+        <p>Vence el <strong>{{ vence|date:"d-m-Y H:i" }}</strong> ({{ horas_temporal }} horas). Al ingresar, el sistema obligará a cambiarla.</p>
+    </div>
+    {% if enviado %}<div class="aviso aviso-info">También se envió por correo a {{ cuenta.email }}.</div>{% endif %}
+    {% if error_envio %}<div class="aviso aviso-rojo">No se pudo enviar el correo. Entregue la contraseña por otro medio seguro.</div>{% endif %}
+    <div class="acciones-form"><a class="boton" href="{{ volver_url }}">Listo, volver al funcionario</a></div>
+</div>
+{% endblock %}

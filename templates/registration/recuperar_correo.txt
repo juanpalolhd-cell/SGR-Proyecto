@@ -1,0 +1,10 @@
+{% autoescape off %}Hola {{ user.get_full_name|default:user.get_username }}:
+
+Se pidió crear una contraseña nueva para la cuenta «{{ user.get_username }}» del Sistema de Gestión de Resultados (SGR).
+
+Para hacerlo, abra este enlace (sirve una sola vez y vence en {{ minutos_enlace }} minutos):
+
+{{ protocol }}://{{ domain }}{% url 'recuperar_confirmar' uidb64=uid token=token %}
+
+Si usted no lo pidió, ignore este correo: su contraseña actual sigue igual.
+{% endautoescape %}

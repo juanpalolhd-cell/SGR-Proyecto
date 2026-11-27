@@ -26,5 +26,10 @@
         </div>
         <button type="submit" class="btn-primario">Ingresar</button>
     </form>
+    {% if recuperacion_habilitada %}
+    <p class="ayuda"><a href="{% url 'recuperar_clave' %}">¿Olvidó su contraseña?</a> Recibirá por correo un enlace de un solo uso que vence. Si su cuenta es nueva, pida a un usuario con Acceso total una contraseña temporal.</p>
+    {% else %}
+    <p class="ayuda">¿Olvidó su contraseña o es una cuenta nueva? Pida a un usuario con Acceso total una contraseña temporal desde el detalle del funcionario. La recuperación por correo no está habilitada en este servidor.</p>
+    {% endif %}
 </section>
 {% endblock %}

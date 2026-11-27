@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block title %}Establecer contraseña{% endblock %}
+{% block content %}
+<a class="enlace-volver" href="{{ volver_url }}">&larr; Volver al funcionario</a>
+<div class="detalle-caja form-caja">
+    <h2>{% if inicial %}Establecer contraseña inicial{% else %}Restablecer contraseña{% endif %}</h2>
+    <p class="ayuda">Funcionario: <strong>{{ persona.nombre }}</strong> · cuenta <strong>{{ cuenta.get_username }}</strong>. Solo Acceso total puede usar esta pantalla. En ambas opciones la contraseña se guarda solo como hash, el funcionario <strong>deberá cambiarla al ingresar</strong> y deja de servir después de <strong>{{ horas_temporal }} horas</strong>.</p>
+    <h3>Opción recomendada: generar contraseña temporal</h3>
+    <form method="post" autocomplete="off">
+        {% csrf_token %}
+        <input type="hidden" name="accion" value="temporal">
+        <p class="ayuda">El sistema crea una contraseña aleatoria que cumple los validadores y <strong>la muestra una sola vez</strong> en la página siguiente. No queda en registros ni en mensajes.</p>
+        {% if puede_enviar %}
+        <label><input type="checkbox" name="enviar_correo" value="1"> Enviarla también por correo a <strong>{{ cuenta.email }}</strong></label>
+        {% elif cuenta.email %}
+        <p class="ayuda">El envío por correo no está disponible: el servidor no tiene SMTP configurado.</p>
+        {% else %}
+        <p class="ayuda">La cuenta no tiene correo registrado, por lo que no se puede enviar por correo.</p>
+        {% endif %}
+        <div class="acciones-form"><button type="submit" class="btn-primario">Generar contraseña temporal</button></div>
+    </form>
+    <h3>O escribir la contraseña</h3>
+    <p class="ayuda">Debe cumplir los validadores del sistema. No se muestra ni se envía por correo: comuníquela por un medio seguro.</p>
+    <form method="post" novalidate autocomplete="off">
+        {% include "registration/_form_clave.html" %}
+        <div class="acciones-form">
+            <button type="submit" class="btn-primario">Guardar contraseña</button>
+            <a class="boton boton-secundario" href="{{ volver_url }}">Cancelar</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

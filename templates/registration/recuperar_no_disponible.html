@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+{% block title %}Recuperación no disponible{% endblock %}
+{% block content %}
+<section class="auth-card">
+    <h2>Recuperación por correo no disponible</h2>
+    <p class="ayuda">Este servidor no tiene el correo configurado. Pida a un usuario con Acceso total una contraseña temporal.</p>
+    <p class="ayuda"><a href="{% url 'login' %}">&larr; Volver a iniciar sesión</a></p>
+</section>
+{% endblock %}

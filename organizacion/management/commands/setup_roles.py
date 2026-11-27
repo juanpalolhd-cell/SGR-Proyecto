@@ -8,6 +8,10 @@ from django.db import transaction
 ORG_APPS = ('organizacion',)
 EDIT_APPS = ('actividades', 'agenda', 'resultados')
 ALL_APPS = ORG_APPS + EDIT_APPS
+# Modelos de auditoría: todos los roles solo pueden verlos; nadie los edita desde el sitio.
+SOLO_LECTURA = ('historialestado',)
+# Modelos internos de seguridad (V4.2): ningún grupo recibe permisos; se gestionan solo desde las vistas de cuenta.
+INTERNOS = ('estadoclave',)
 
 
 def _perms_for_apps(app_labels, actions=None):
@@ -18,7 +22,8 @@ def _perms_for_apps(app_labels, actions=None):
         for a in actions:
             q |= Q(codename__startswith=f'{a}_')
         qs = qs.filter(q)
-    return list(qs)
+    qs = qs.select_related('content_type')
+    return [p for p in qs if p.content_type.model not in INTERNOS and (p.content_type.model not in SOLO_LECTURA or p.codename.startswith('view_'))]
 
 
 class Command(BaseCommand):

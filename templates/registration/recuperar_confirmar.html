@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block title %}Nueva contraseña{% endblock %}
+{% block content %}
+<section class="auth-card">
+    {% if validlink %}
+    <h2>Crear una contraseña nueva</h2>
+    <p class="ayuda">Escriba su nueva contraseña dos veces. Debe cumplir los validadores del sistema.</p>
+    <form method="post" novalidate autocomplete="off">
+        {% include "registration/_form_clave.html" %}
+        <button type="submit" class="btn-primario">Guardar contraseña</button>
+    </form>
+    {% else %}
+    <h2>Enlace no válido</h2>
+    <p class="ayuda">El enlace de recuperación no es válido: ya se usó o venció. <a href="{% url 'recuperar_clave' %}">Solicite uno nuevo</a>.</p>
+    {% endif %}
+</section>
+{% endblock %}

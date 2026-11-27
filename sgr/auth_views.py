@@ -9,6 +9,14 @@ from django.utils.http import url_has_allowed_host_and_scheme
 from django.views import View
 from django.views.decorators.cache import never_cache
 
+from sgr import claves
+
+
+def _ctx(extra=None):
+    ctx = {'recuperacion_habilitada': claves.recuperacion_habilitada()}
+    ctx.update(extra or {})
+    return ctx
+
 
 @method_decorator(never_cache, name='dispatch')
 class LoginView(View):
@@ -17,18 +25,21 @@ class LoginView(View):
     def get(self, request):
         if request.user.is_authenticated:
             return redirect('home')
-        return render(request, self.template_name)
+        return render(request, self.template_name, _ctx())
 
     def post(self, request):
         username = (request.POST.get('username') or '').strip()
         password = request.POST.get('password') or ''
         user = authenticate(request, username=username, password=password)
+        if user is None and getattr(request, 'sgr_clave_vencida', False):
+            messages.error(request, 'Su contraseña temporal venció. Pida una nueva a un usuario con Acceso total o use «¿Olvidó su contraseña?».')
+            return render(request, self.template_name, _ctx({'username': username}), status=400)
         if user is None:
             messages.error(request, 'Usuario o contraseña incorrectos.')
             return render(
                 request,
                 self.template_name,
-                {'username': username},
+                _ctx({'username': username}),
                 status=400,
             )
         if not user.is_active:
@@ -36,10 +47,13 @@ class LoginView(View):
             return render(
                 request,
                 self.template_name,
-                {'username': username},
+                _ctx({'username': username}),
                 status=400,
             )
         login(request, user)
+        if claves.debe_cambiar(user):
+            messages.warning(request, 'Debe cambiar su contraseña asignada antes de continuar.')
+            return redirect('cambiar_clave')
         messages.success(request, f'Bienvenido/a, {user.get_username()}.')
         next_url = request.GET.get('next') or request.POST.get('next') or reverse('home')
         if not url_has_allowed_host_and_scheme(next_url, allowed_hosts={request.get_host()}, require_https=request.is_secure()):

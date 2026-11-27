@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block title %}Revise su correo{% endblock %}
+{% block content %}
+<section class="auth-card">
+    <h2>Revise su correo</h2>
+    <p class="ayuda">Si el correo indicado corresponde a una cuenta activa del SGR, se envió un enlace para crear una contraseña nueva. Por seguridad, esta respuesta es la misma exista o no la cuenta.</p>
+    <p class="ayuda">Si no llega en unos minutos, revise la carpeta de spam o pida ayuda a un usuario con Acceso total.</p>
+    <p class="ayuda"><a href="{% url 'login' %}">&larr; Volver a iniciar sesión</a></p>
+</section>
+{% endblock %}

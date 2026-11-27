@@ -37,12 +37,29 @@ if not SECRET_KEY:
 ALLOWED_HOSTS = [host.strip() for host in os.environ.get('DJANGO_ALLOWED_HOSTS', 'localhost,127.0.0.1,testserver').split(',') if host.strip()]
 CSRF_TRUSTED_ORIGINS = [origin.strip() for origin in os.environ.get('DJANGO_CSRF_TRUSTED_ORIGINS', 'http://localhost:8000,http://127.0.0.1:8000').split(',') if origin.strip()]
 
-if not DEBUG:
+
+def _env_bool(nombre, defecto):
+    return os.environ.get(nombre, str(defecto)).strip().lower() in {'1', 'true', 'yes', 'si', 'sí'}
+
+
+# --- HTTPS detrás de nginx (V4.2). Todo se controla con variables de entorno, así el
+# desarrollo local (DEBUG=True, sin variables) sigue funcionando por HTTP.
+# nginx termina TLS y envía «X-Forwarded-Proto: https»; Django confía en esa cabecera
+# solo cuando DJANGO_SECURE_PROXY_SSL_HEADER está activo (por defecto, en producción).
+if _env_bool('DJANGO_SECURE_PROXY_SSL_HEADER', not DEBUG):
     SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
-    SECURE_SSL_REDIRECT = os.environ.get('DJANGO_SECURE_SSL_REDIRECT', 'False').lower() in {'1', 'true', 'yes'}
-    SECURE_COOKIES = os.environ.get('DJANGO_SECURE_COOKIES', 'True').lower() in {'1', 'true', 'yes'}
-    SESSION_COOKIE_SECURE = SECURE_COOKIES
-    CSRF_COOKIE_SECURE = SECURE_COOKIES
+# nginx ya redirige 80 → 443; esta opción solo agrega la misma redirección en Django.
+SECURE_SSL_REDIRECT = _env_bool('DJANGO_SECURE_SSL_REDIRECT', False)
+SECURE_REDIRECT_EXEMPT = [r'^\.well-known/']
+# Cookies de sesión y CSRF solo por HTTPS (por defecto en producción).
+SECURE_COOKIES = _env_bool('DJANGO_SECURE_COOKIES', not DEBUG)
+SESSION_COOKIE_SECURE = SECURE_COOKIES
+CSRF_COOKIE_SECURE = SECURE_COOKIES
+# HSTS: 0 = desactivado. El kit HTTPS lo envía desde nginx; aquí queda disponible para
+# quien no use ese kit. Empezar con un valor moderado (p. ej. 3600) antes de subirlo.
+SECURE_HSTS_SECONDS = int(os.environ.get('DJANGO_SECURE_HSTS_SECONDS', '0'))
+SECURE_HSTS_INCLUDE_SUBDOMAINS = _env_bool('DJANGO_SECURE_HSTS_INCLUDE_SUBDOMAINS', False)
+SECURE_HSTS_PRELOAD = _env_bool('DJANGO_SECURE_HSTS_PRELOAD', False)
 
 
 # Application definition
@@ -69,6 +86,7 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'sgr.middleware.LoginRequiredMiddleware',
+    'sgr.middleware.CambioClaveObligatorioMiddleware',
 ]
 
 ROOT_URLCONF = 'sgr.urls'
@@ -167,4 +185,48 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 LOGIN_URL = '/login/'
 LOGIN_REDIRECT_URL = '/'
 LOGOUT_REDIRECT_URL = '/login/'
-LOGIN_EXEMPT_URLS = ['/login/', '/logout/', '/admin/', '/static/']
+LOGIN_EXEMPT_URLS = ['/login/', '/logout/', '/admin/', '/static/', '/cuenta/recuperar/']
+
+# V4.2: rechaza contraseñas asignadas (temporal o restablecida por Acceso total) ya vencidas.
+AUTHENTICATION_BACKENDS = ['sgr.backends.ClaveTemporalBackend']
+
+
+# --- Contraseñas temporales y recuperación (V4.2). Todos los valores vienen del entorno
+# (/etc/sgr/sgr.env en el servidor); el código no contiene credenciales.
+SGR_CLAVE_TEMPORAL_HORAS = int(os.environ.get('SGR_CLAVE_TEMPORAL_HORAS', '72'))
+PASSWORD_RESET_TIMEOUT = int(os.environ.get('DJANGO_PASSWORD_RESET_TIMEOUT', '3600'))  # segundos (1 hora)
+SGR_RECUPERACION_LIMITE = int(os.environ.get('SGR_RECUPERACION_LIMITE', '5'))
+SGR_RECUPERACION_VENTANA = int(os.environ.get('SGR_RECUPERACION_VENTANA', '3600'))
+SGR_URL_PUBLICA = os.environ.get('SGR_URL_PUBLICA', '')  # p. ej. https://sgr.ejemplo.cl (usar HTTPS en producción)
+SGR_PROXY_IP_HEADER = os.environ.get('SGR_PROXY_IP_HEADER', '')  # p. ej. HTTP_X_FORWARDED_FOR detrás de nginx
+
+# Correo: consola en desarrollo; en producción, sin configuración, no se envía nada (dummy).
+EMAIL_BACKEND = os.environ.get(
+    'DJANGO_EMAIL_BACKEND',
+    'django.core.mail.backends.console.EmailBackend' if DEBUG else 'django.core.mail.backends.dummy.EmailBackend',
+)
+EMAIL_HOST = os.environ.get('DJANGO_EMAIL_HOST', '')
+EMAIL_PORT = int(os.environ.get('DJANGO_EMAIL_PORT', '587'))
+EMAIL_USE_TLS = _env_bool('DJANGO_EMAIL_USE_TLS', True)
+EMAIL_USE_SSL = _env_bool('DJANGO_EMAIL_USE_SSL', False)
+EMAIL_HOST_USER = os.environ.get('DJANGO_EMAIL_HOST_USER', '')
+EMAIL_HOST_PASSWORD = os.environ.get('DJANGO_EMAIL_HOST_PASSWORD', '')
+EMAIL_TIMEOUT = int(os.environ.get('DJANGO_EMAIL_TIMEOUT', '15'))
+DEFAULT_FROM_EMAIL = os.environ.get('DJANGO_DEFAULT_FROM_EMAIL', 'SGR <no-responder@localhost>')
+EMAIL_FILE_PATH = os.environ.get('DJANGO_EMAIL_FILE_PATH', str(BASE_DIR / 'correos_locales'))
+
+# Caché para el límite de solicitudes. Con varios procesos de gunicorn use SGR_CACHE=db
+# (tabla creada con «manage.py createcachetable»), para que el límite sea común a todos.
+if os.environ.get('SGR_CACHE', 'local') == 'db':
+    CACHES = {'default': {'BACKEND': 'django.core.cache.backends.db.DatabaseCache', 'LOCATION': 'sgr_cache'}}
+else:
+    CACHES = {'default': {'BACKEND': 'django.core.cache.backends.locmem.LocMemCache', 'LOCATION': 'sgr'}}
+
+# Auditoría mínima (cambios de contraseña y reapertura de períodos) hacia la salida estándar,
+# que gunicorn/systemd conservan en el journal. Nunca se registran contraseñas.
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'handlers': {'console': {'class': 'logging.StreamHandler'}},
+    'loggers': {'sgr.auditoria': {'handlers': ['console'], 'level': 'INFO', 'propagate': False}},
+}

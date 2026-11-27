@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block title %}Cambiar contraseña{% endblock %}
+{% block content %}
+{% if not obligatorio %}<a class="enlace-volver" href="{% url 'home' %}">&larr; Volver al inicio</a>{% endif %}
+<div class="detalle-caja form-caja">
+    <h2>Cambiar contraseña</h2>
+    {% if obligatorio %}<div class="aviso aviso-ambar"><strong>Cambio obligatorio:</strong> su contraseña fue asignada por un usuario con Acceso total (o es temporal). Debe reemplazarla por una propia antes de usar el sistema. Mientras tanto solo puede cambiarla o cerrar sesión.</div>{% endif %}
+    <p class="ayuda">Usuario: <strong>{{ user.get_username }}</strong>. Escriba su contraseña actual y la nueva dos veces. La contraseña se guarda solo como hash y no se muestra ni se envía por correo.</p>
+    <form method="post" novalidate autocomplete="off">
+        {% include "registration/_form_clave.html" %}
+        <div class="acciones-form">
+            <button type="submit" class="btn-primario">Cambiar contraseña</button>
+            {% if not obligatorio %}<a class="boton boton-secundario" href="{% url 'home' %}">Cancelar</a>{% endif %}
+        </div>
+    </form>
+</div>
+{% endblock %}
